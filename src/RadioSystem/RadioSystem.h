@@ -19,7 +19,7 @@ using boost::asio::ip::tcp;
 class RadioSystem{
 
 public:
-	RadioSystem(NodeManager *nm, MessageParser* m, string ip_address, string ip_address2, string port);
+	RadioSystem(NodeManager *nm, MessageParser* m, string ip_address, string port);
 	/*void set_nodeManager(NodeManager *nm){
 		nodeManager_ptr = nm;
 		cout << "RS node manager set " << nm << endl;
@@ -36,7 +36,6 @@ public:
 	void joinTelosbReceiver();
 
 	void startWiFiReceiver();
-	void startWiFiReceiver2(); //ALEXIS 15/12 WIFI CLASS
 	//int startWiFiReceiver2(); //ALEXIS 14/12 WIFI THREAD
 	//void joinWifiReceiver2(); //ALEXIS 14/12 WIFI THREAD
 
@@ -52,7 +51,7 @@ private:
 	TelosbRadioSystem *telosbRadioSystem_ptr;
 	WiFiRadioSystem *wifiRadioSystem_ptr;
 	//WiFiRadioSystem *wifiRadioSystem_ptr2; //ALEXIS 14/12 WIFI THREAD
-	ALWiFiRadioSystem *wifiRadioSystem_ptr2; //ALEXIS 15/12 WIFI CLASS
+
 
 	IncomingMessageQueue *incoming_message_queue_ptr;
 	MessageParser *msg_parser;

@@ -39,9 +39,9 @@ int main(int argc, char ** argv){
 	switch(type){
 	case SINK:{
 		//create the main components
-		nodeMng  = new NodeManager(SINK, argv[6]);
+		nodeMng  = new NodeManager(SINK, argv[5]);
 		msg_parser = new MessageParser();
-		radioSys = new RadioSystem(nodeMng, msg_parser,argv[3],argv[4],argv[5]);
+		radioSys = new RadioSystem(nodeMng, msg_parser,argv[3],argv[4]);
 		taskMng  = new TaskManager(nodeMng);
 
 
@@ -52,7 +52,7 @@ int main(int argc, char ** argv){
 		taskMng->start();
 
 		//start a telosb receiver
-		radioSys->startTelosbReceiver(argv[2], argv[6]);
+		radioSys->startTelosbReceiver(argv[2], argv[5]);
 
 		//start the sink2gui interface
 		tcp::resolver resolver(io_service);
@@ -67,9 +67,9 @@ int main(int argc, char ** argv){
 		break;
 	}
 	case CAMERA:{
-		nodeMng  = new NodeManager(CAMERA, argv[6]);
+		nodeMng  = new NodeManager(CAMERA, argv[5]);
 		msg_parser = new MessageParser();
-		radioSys = new RadioSystem(nodeMng,msg_parser,argv[3],argv[4],argv[5]);
+		radioSys = new RadioSystem(nodeMng,msg_parser,argv[3],argv[4]);
 		taskMng  = new TaskManager(nodeMng);
 		//connMng = new ConnectionManager();
 
@@ -81,7 +81,7 @@ int main(int argc, char ** argv){
 		taskMng->start();
 
 		//start a telosb receiver
-		radioSys->startTelosbReceiver(argv[2], argv[6]); //ALEXIS
+		radioSys->startTelosbReceiver(argv[2], argv[5]); //ALEXIS
 
 		//start the WiFi manager
 		radioSys->startWiFiReceiver();
@@ -92,9 +92,9 @@ int main(int argc, char ** argv){
 		break;
 	}
 	case COOPERATOR:{
-		nodeMng  = new NodeManager(COOPERATOR,argv[6]);
+		nodeMng  = new NodeManager(COOPERATOR,argv[5]);
 		msg_parser = new MessageParser();
-		radioSys = new RadioSystem(nodeMng,msg_parser,argv[3],argv[4],argv[5]);
+		radioSys = new RadioSystem(nodeMng,msg_parser,argv[3],argv[4]);
 		taskMng  = new TaskManager(nodeMng);
 		//connMng = new ConnectionManager();
 
@@ -106,7 +106,7 @@ int main(int argc, char ** argv){
 		taskMng->start();
 		
 		//radioSys->startWiFiReceiver(); ORIGINAL
-		radioSys->startWiFiReceiver2(); //ALEXIS 15/12 WIFI CLASS
+		radioSys->startWiFiReceiver(); //ALEXIS 15/12 WIFI CLASS
 		
 		//radioSys->joinWifiReceiver2(); //ALEXIS 14/12 WIFI THREAD
 		break;

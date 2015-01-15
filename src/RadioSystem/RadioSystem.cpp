@@ -12,7 +12,7 @@ using namespace std;
 
 
 
-RadioSystem::RadioSystem(NodeManager* nm, MessageParser* m, string ip_address, string ip_address2, string port){
+RadioSystem::RadioSystem(NodeManager* nm, MessageParser* m, string ip_address, string port){
 	nodeManager_ptr = nm;
 	msg_parser = m;
 	incoming_message_queue_ptr = new IncomingMessageQueue(this,msg_parser);
@@ -46,8 +46,7 @@ RadioSystem::RadioSystem(NodeManager* nm, MessageParser* m, string ip_address, s
 		//}
 		
 		//ALEXIS 15/12 WIFI CONNECTION
-		tcp::resolver::query query2(ip_address2, port);
-		wifiRadioSystem_ptr2 = new ALWiFiRadioSystem(query,query2,std::string("client"),nodeManager_ptr);
+		wifiRadioSystem_ptr = new WiFiRadioSystem(query,std::string("client"),nodeManager_ptr);
 		//
 		
 		break;
@@ -59,9 +58,6 @@ RadioSystem::RadioSystem(NodeManager* nm, MessageParser* m, string ip_address, s
 
 void RadioSystem::startWiFiReceiver(){
 	wifiRadioSystem_ptr->startReceiver();
-}
-void RadioSystem::startWiFiReceiver2(){
-	wifiRadioSystem_ptr2->startReceiver();
 }
 
 
@@ -100,7 +96,7 @@ void RadioSystem::notifyMsg(Message* msg){
 }
 
 std::set<Connection*> RadioSystem::getWiFiConnections(){
-	return wifiRadioSystem_ptr2->getWiFiConnections(); //ALEXIS 16/12 WIFI CLASS
+	return wifiRadioSystem_ptr->getWiFiConnections(); //ALEXIS 16/12 WIFI CLASS
 }
 
 //void RadioSystem::radioSystemThread(){
