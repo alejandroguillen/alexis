@@ -1,0 +1,92 @@
+VSNTestBed DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+
+  DataATCMessage ::= SEQUENCE {
+    frameID      INTEGER,     -- Identifies which frame the features belong to.
+    blockNumber  INTEGER,     -- Features are grouped into blocks.
+    featuresData OCTET STRING, -- Descriptor data.
+    kptsData 	 OCTET STRING  -- Keypoints data (todo: optional?)
+  }
+
+  DataCTAMessage ::= SEQUENCE {
+    frameID      INTEGER,     -- Identifies which frame the data belongs to.
+    sliceNumber  INTEGER,     -- An image would be divided in several slices 
+                              -- each of which can be decoded into useful 
+                              -- sub-area of the complete image.
+    topLeft      Coordinate,  -- Describes where the slice is positioned in the 
+                              -- original image.
+    dataSize     INTEGER,     -- The length of the data bit string.
+    data         OCTET STRING   -- JPEG encoded image data.
+  }
+
+  --Sent from server to camera. Specifies the details of, and initiates CTA 
+  --mode operation
+  StartCTAMessage ::= SEQUENCE {
+    framesPerSecond      INTEGER,  -- Valid options are: -1=as high as 
+                                   -- possible, 0=one-shot, <=1=specific rate.
+    qualityFactor        INTEGER,  -- JPEG quality factor to be used.
+    frameHeight          INTEGER,  -- Height of the frame to be captured.
+    frameWidth           INTEGER,   -- Width of the frame to be captured.
+    numSlices			 INTEGER
+  }
+
+--Sent from server to camera. Specifies the details of, and initiates ATC 
+  --mode operation
+  StartATCMessage ::= SEQUENCE {
+    framesPerSecond      INTEGER,          -- Valid options are: -1=as high 
+                                           -- as possible, 0=one-shot, 
+                                           -- <=1=specific rate.
+    detectorType         DetectorTypes,    -- Type of detector to be used.
+    detectorThreshold    REAL,             -- Detection threshold.
+    descriptorType       DescriptorTypes,  -- Type of descriptor to be used.
+    descriptorLength     INTEGER,          -- Length of each descriptor.
+    maxNumberOfFeatures  INTEGER,          -- Maximum number of features to 
+                                           -- transfer back to the server.
+    rotationInvariant    BOOLEAN,          -- Use rotation invariant 
+                                           -- descriptors.
+    coding               CodingChoices,    -- Type of coding to be performed on 
+                                           -- the descriptors.
+    transferCoordinates  BOOLEAN,          -- Should coordinates be transfered?
+    transferScale        BOOLEAN,          -- Should scale be transfered?
+    transferOrientation  BOOLEAN,           -- Should orientation be transfered?
+    numBlocks			 INTEGER
+  }
+
+  CodingChoices ::= ENUMERATED {
+    none,
+    entropyCoding
+  }
+
+  Coordinate ::= SEQUENCE {
+    xCoordinate  INTEGER,
+    yCoordinate  INTEGER
+  }
+
+  --Whichever descriptors we support.
+  DescriptorTypes ::= ENUMERATED {
+    sift,
+    surf,
+    brief,
+    brisk,
+    orb,
+    freak
+  }
+
+  --Whichever detectors we support.
+  DetectorTypes ::= ENUMERATED {
+    fast, 
+    star,
+    sift,
+    surf,
+    orb,
+    brisk,
+    mser
+  }
+
+-- InternalMessage ::= CHOICE {
+--    StartCTAMessage,
+--   StartATCMessage
+--  }
+
+
+END
