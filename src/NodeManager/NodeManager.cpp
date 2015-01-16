@@ -57,6 +57,8 @@ NodeManager::NodeManager(NodeType nt, string ID){
 	}
 	cur_state = IDLE;
 	datc_param_camera.reserve(2); //ALEXIS 14/12
+	state_processing_thread.reserve(2);
+	//state_processing_thread = {0,0}
 	received_notifications = 0;
 	outgoing_msg_seq_num = 255;
 	frame_id = -1;
@@ -84,7 +86,7 @@ void NodeManager::deleteMsg(Message *msg){
 void NodeManager::notify_msg(Message *msg){
 	cout << "NM: a message notification has been received:" << msg->getMessageType() << endl;
 
-	boost::thread m_thread;
+	boost::thread p_thread;
 	switch(msg->getMessageType()){
 	case START_CTA_MESSAGE:
 	{
@@ -224,7 +226,7 @@ void NodeManager::notify_msg(Message *msg){
 
 			datc_param_camera[i].num_feat_per_block = ((StartDATCMsg*)msg)->getNumFeatPerBlock();
 			datc_param_camera[i].num_cooperators = ((StartDATCMsg*)msg)->getNumCooperators();
-			cout << "NM: Saved DATC Parameters in Coop " << (msg)->getDestination() << endl; //ALEXIS 17/12 COUT
+			cout << "NM: Saved DATC Parameters " << i+1 << " in Coop" << (msg)->getDestination() << endl; //ALEXIS 17/12 COUT
 			//
 			delete(msg);
 		}
@@ -241,12 +243,13 @@ void NodeManager::notify_msg(Message *msg){
 			break;
 		}
 		case COOPERATOR:{
-			cout << "it's a DATA CTA message" << endl;
+			cout << "it's a DATA CTA message from Camera " << msg->getSource() << endl;
 
-			if(cur_state == IDLE){
+			/*if(cur_state == IDLE){
 				cur_state = ACTIVE;
 				DATC_processing_thread_cooperator((DataCTAMsg*)msg);
-			}
+			}*/
+			boost::thread p_thread(&NodeManager::DATC_processing_thread_cooperator, this, (DataCTAMsg*)msg);
 			delete(msg);
 			break;
 		}
@@ -814,17 +817,17 @@ cerr << "extracted " << (int)kpts.size() << "keypoints\tDetThreshold=" << datc_p
 	cout << "and " << (int)(features.rows) << "features" << endl;
 
 	DataATCMsg *atc_msg = new DataATCMsg(frame_id, 0, 1, detTime, descTime, kencTime, fencTime, 0, features.rows, kpts.size(), ft_bitstream, kp_bitstream);
-	std::set<Connection*> connections = radioSystem_ptr->getWiFiConnections();
-	std::set<Connection*>::iterator it = connections1.begin();
+	std::set<Connection*> connections2 = radioSystem_ptr->getWiFiConnections();
+	std::set<Connection*>::iterator it2 = connections2.begin();
 	//ALEXIS 09/01 ACK MESSAGE problem
-	int tmp1 = connections1.size();
+	int tmp1 = connections2.size();
 	if(tmp1 > 1){   //if because Camera1 off -> error Camera2
 		int ack = msg->getSource();
 		ack--;
-		std::advance(it1, ack);
+		std::advance(it2, ack);
 	}
 	//
-	Connection* cn = *it;
+	Connection* cn = *it2;
 	atc_msg->setTcpConnection(cn);
 	//ALEXIS
 	atc_msg->setSource(msg->getDestination());

@@ -91,6 +91,7 @@ public:
 private:
 	SystemState cur_state;
 	NodeType node_type;
+	boost::thread p_thread;
 
 	CTA_param_t cta_param;
 	ATC_param_t atc_param;
@@ -99,6 +100,7 @@ private:
 
 	unsigned short outgoing_msg_seq_num;
 	int frame_id;
+	std::vector<int> state_processing_thread;
 
 	RadioSystem *radioSystem_ptr;
 	TaskManager *taskManager_ptr;
