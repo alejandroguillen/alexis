@@ -13,6 +13,7 @@
 #include "S2GInterface/S2GInterface.h"
 
 class OffloadingManager;
+class ProcessingManager;
 
 //todo: param structures
 typedef struct CTA_param{
@@ -117,6 +118,9 @@ private:
 	VisualFeatureEncoding *encoder;
 	VisualFeatureDecoding *decoder;
 	OffloadingManager *offloading_manager;
+	ProcessingManager *processing_manager;
+	
+	boost::thread p_thread;
 };
 
 #endif

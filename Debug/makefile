@@ -21,19 +21,6 @@ RM := rm -rf
 -include src/Messages/subdir.mk
 -include src/ASN.1/subdir.mk
 -include src/subdir.mk
--include Release_BBW/src/Tasks/subdir.mk
--include Release_BBW/src/TaskManager/subdir.mk
--include Release_BBW/src/S2GInterface/subdir.mk
--include Release_BBW/src/RadioSystem/WiFi/subdir.mk
--include Release_BBW/src/RadioSystem/Telosb/subdir.mk
--include Release_BBW/src/RadioSystem/subdir.mk
--include Release_BBW/src/NodeManager/subdir.mk
--include Release_BBW/src/MultimediaSystem/thirdparty/coder/subdir.mk
--include Release_BBW/src/MultimediaSystem/thirdparty/agast/src/subdir.mk
--include Release_BBW/src/MultimediaSystem/subdir.mk
--include Release_BBW/src/Messages/subdir.mk
--include Release_BBW/src/ASN.1/subdir.mk
--include Release_BBW/src/subdir.mk
 -include subdir.mk
 -include objects.mk
 
@@ -63,19 +50,19 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: jordi
+all: alexis
 
 # Tool invocations
-jordi: $(OBJS) $(USER_OBJS)
+alexis: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MacOS X C++ Linker'
-	g++  -o "jordi" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++  -o "alexis" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(C++_DEPS)$(OBJS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) jordi
+	-$(RM) $(C++_DEPS)$(OBJS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) alexis
 	-@echo ' '
 
 .PHONY: all clean dependents

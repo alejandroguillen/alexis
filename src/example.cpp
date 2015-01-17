@@ -70,6 +70,8 @@ int main(int argc, char ** argv){
 		nodeMng  = new NodeManager(CAMERA, argv[6]);
 		msg_parser = new MessageParser();
 		radioSys = new RadioSystem(nodeMng,msg_parser,argv[3],argv[4],argv[5]);
+
+		
 		taskMng  = new TaskManager(nodeMng);
 		//connMng = new ConnectionManager();
 

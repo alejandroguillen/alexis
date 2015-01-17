@@ -8,6 +8,7 @@
 #include "Messages/ACKsliceMsg.h"
 #include "Messages/AddCameraMsg.h"
 #include "RadioSystem/OffloadingManager.h"
+#include "RadioSystem/ProcessingManager.h"
 
 using namespace std;
 
@@ -49,6 +50,8 @@ NodeManager::NodeManager(NodeType nt, string ID){
 		extractor->setDescriptor("BRISK",&dscPrms);
 
 		encoder = new VisualFeatureEncoding();
+		
+		processing_manager = new ProcessingManager(this);
 
 		break;
 	}
@@ -245,7 +248,19 @@ void NodeManager::notify_msg(Message *msg){
 
 			if(cur_state == IDLE){
 				cur_state = ACTIVE;
-				DATC_processing_thread_cooperator((DataCTAMsg*)msg);
+				std::set<Connection*> connections = radioSystem_ptr->getWiFiConnections();
+				std::set<Connection*>::iterator it = connections.begin();
+				//ALEXIS 09/01 ACK MESSAGE problem
+				int tmp = connections.size();
+				if(tmp > 1){   //if because Camera1 off -> error Camera2
+					int ack = msg->getSource();
+					ack--;
+					std::advance(it, ack);
+				}
+				//
+				Connection* cn = *it;
+				processing_manager->addCameraData(datc_param_camera,(DataCTAMsg*)msg,cn);
+				boost::thread p_thread(&ProcessingManager::Processing_thread_cooperator, msg->getSource()); //this??
 			}
 			delete(msg);
 			break;

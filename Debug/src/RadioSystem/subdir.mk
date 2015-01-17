@@ -9,6 +9,7 @@ CPP_SRCS += \
 ../src/RadioSystem/LoadBalancingConfig.cpp \
 ../src/RadioSystem/MessageParser.cpp \
 ../src/RadioSystem/OffloadingManager.cpp \
+../src/RadioSystem/ProcessingManager.cpp \
 ../src/RadioSystem/ProcessingSpeedEstimator.cpp \
 ../src/RadioSystem/RadioSystem.cpp \
 ../src/RadioSystem/TxSpeedEstimator.cpp 
@@ -19,6 +20,7 @@ OBJS += \
 ./src/RadioSystem/LoadBalancingConfig.o \
 ./src/RadioSystem/MessageParser.o \
 ./src/RadioSystem/OffloadingManager.o \
+./src/RadioSystem/ProcessingManager.o \
 ./src/RadioSystem/ProcessingSpeedEstimator.o \
 ./src/RadioSystem/RadioSystem.o \
 ./src/RadioSystem/TxSpeedEstimator.o 
@@ -29,6 +31,7 @@ CPP_DEPS += \
 ./src/RadioSystem/LoadBalancingConfig.d \
 ./src/RadioSystem/MessageParser.d \
 ./src/RadioSystem/OffloadingManager.d \
+./src/RadioSystem/ProcessingManager.d \
 ./src/RadioSystem/ProcessingSpeedEstimator.d \
 ./src/RadioSystem/RadioSystem.d \
 ./src/RadioSystem/TxSpeedEstimator.d 
@@ -38,7 +41,7 @@ CPP_DEPS += \
 src/RadioSystem/%.o: ../src/RadioSystem/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -Iusr/local/include -I/usr/local/include/opencv -I"/home/alexis/Dropbox/THESIS/Testbed_code/workspace/jordi/src" -I"/home/alexis/Dropbox/THESIS/Testbed_code/workspace/jordi/src/ASN.1" -I"/home/alexis/Dropbox/THESIS/Testbed_code/workspace/jordi/src/MultimediaSystem/includes" -I/usr/include -O0 -g3 -Wall -c -fmessage-length=0 -g2 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	g++ -Iusr/local/include -I/usr/local/include/opencv -I"/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src" -I"/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/ASN.1" -I"/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/MultimediaSystem/includes" -I/usr/include -O0 -g3 -Wall -c -fmessage-length=0 -g2 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
