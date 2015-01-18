@@ -21,10 +21,10 @@ using namespace std;
 	radioSystem_ptr = rs;
 }*/
 
-ProcessingManager::ProcessingManager(NodeManager* nm){
-	//io(),
-	//t(io),
-	//work(io)
+/*ProcessingManager::ProcessingManager(NodeManager* nm){
+	iop(),
+	t(iop),
+	work(iop)
 	{
 		cameras_to_use = 0;
 		received_cameras = 0;
@@ -33,9 +33,21 @@ ProcessingManager::ProcessingManager(NodeManager* nm){
 		next_detection_threshold = 0;
 		//startTimer();
 	}
-}	
+}*/
+ProcessingManager::ProcessingManager(NodeManager* nm){
+	{
+		
+		//cameras_to_use = 0;
+		//received_cameras = 0;
+		node_manager = nm;
+		frame_id = -1;
+		next_detection_threshold = 0;
+		//startTimer();
+		//cameraList.reserve(2);
+	}
+}
 
-void ProcessingManager::addCameraData(vector<DATC_param_t> datc_param_camera, DataCTAMsg* msg, Connection* c){
+void ProcessingManager::addCameraData(DATC_param_t* datc_param_camera, DataCTAMsg* msg, Connection* c){
 	camera temp_cam;
 
 
@@ -55,8 +67,8 @@ void ProcessingManager::addCameraData(vector<DATC_param_t> datc_param_camera, Da
 
 	//parameters
 
-	temp_cam.detection_threshold = datc_param_camera[temp_cam.id].detection_threshold;
-	temp_cam.max_features = datc_param_camera[temp_cam.id].max_features;
+	temp_cam.detection_threshold = datc_param_camera->detection_threshold;
+	temp_cam.max_features = datc_param_camera->max_features;
 
 	//Data
 	OCTET_STRING_t oct_data = msg->getData();
@@ -75,6 +87,7 @@ void ProcessingManager::addCameraData(vector<DATC_param_t> datc_param_camera, Da
 	temp_cam.Pe = 1000;
 	
 	cameraList.push_back(temp_cam);
+	//cameraList[temp_cam.id]=temp_cam;
 }
 
 void ProcessingManager::sendACKMessage(int i){
@@ -99,13 +112,11 @@ void ProcessingManager::send_DATA_ATC_Message(int i, int frame_id, double detTim
 	delete(atc_msg);	
 }
 
-void ProcessingManager::Processing_thread_cooperator(int i){
+void ProcessingManager::Processing_thread_cooperator(){
 	cout << "NM: I'm entering the Processing thread " << endl;
-
-
 	//boost::mutex monitor;
 	//boost::mutex::scoped_lock lk(monitor);
-
+	int i = 0;
 	//decode the image (should become a task)
 	cv::Mat slice;
 	slice = imdecode(cameraList[i].data,CV_LOAD_IMAGE_GRAYSCALE);

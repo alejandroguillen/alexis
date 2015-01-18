@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <iostream>
+#include <boost/bind.hpp>
 #include "NodeManager/NodeManager.h"
 #include "Tasks/Tasks.h"
 #include "Messages/DataATCMsg.h"
@@ -246,8 +247,6 @@ void NodeManager::notify_msg(Message *msg){
 		case COOPERATOR:{
 			cout << "it's a DATA CTA message" << endl;
 
-			if(cur_state == IDLE){
-				cur_state = ACTIVE;
 				std::set<Connection*> connections = radioSystem_ptr->getWiFiConnections();
 				std::set<Connection*>::iterator it = connections.begin();
 				//ALEXIS 09/01 ACK MESSAGE problem
@@ -259,9 +258,14 @@ void NodeManager::notify_msg(Message *msg){
 				}
 				//
 				Connection* cn = *it;
-				processing_manager->addCameraData(datc_param_camera,(DataCTAMsg*)msg,cn);
-				boost::thread p_thread(&ProcessingManager::Processing_thread_cooperator, msg->getSource()); //this??
-			}
+				//ProcessingManager processing_manager2;
+				processing_manager->addCameraData(&datc_param_camera[(msg->getSource()-1)],(DataCTAMsg*)msg,cn);
+				//ProcessingManager w;
+				//boost::thread p_thread(boost::bind(&ProcessingManager::Processing_thread_cooperator, msg->getSource(), &w)); //this??
+				boost::thread p_thread(&ProcessingManager::Processing_thread_cooperator, processing_manager);
+				//boost::thread p_thread(boost::bind(&ProcessingManager::Processing_thread_cooperator, &processing_manager2));
+				//p_thread.join();
+				
 			delete(msg);
 			break;
 		}

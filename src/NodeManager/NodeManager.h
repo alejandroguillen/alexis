@@ -2,6 +2,7 @@
 #define NODEMANAGER_H
 
 #include <boost/thread.hpp>
+#include <boost/bind.hpp>
 #include <boost/date_time.hpp>
 #include <queue>
 #include <vector>
