@@ -251,20 +251,21 @@ void NodeManager::notify_msg(Message *msg){
 				std::set<Connection*>::iterator it = connections.begin();
 				//ALEXIS 09/01 ACK MESSAGE problem
 				int tmp = connections.size();
-				if(tmp > 1){   //if because Camera1 off -> error Camera2
+				int pos_camera = msg->getSource()-1;
+				std::advance(it, pos_camera);
+				/*if(tmp > 1){   //if because Camera1 off -> error Camera2
 					int ack = msg->getSource();
 					ack--;
 					std::advance(it, ack);
 				}
-				//
+				//*/
 				Connection* cn = *it;
 				//ProcessingManager processing_manager2;
-				processing_manager->addCameraData(&datc_param_camera[(msg->getSource()-1)],(DataCTAMsg*)msg,cn);
+				processing_manager->addCameraData(&datc_param_camera[pos_camera],(DataCTAMsg*)msg,cn);
 				//ProcessingManager w;
 				//boost::thread p_thread(boost::bind(&ProcessingManager::Processing_thread_cooperator, msg->getSource(), &w)); //this??
-				boost::thread p_thread(&ProcessingManager::Processing_thread_cooperator, processing_manager);
-				//boost::thread p_thread(boost::bind(&ProcessingManager::Processing_thread_cooperator, &processing_manager2));
-				//p_thread.join();
+				//boost::thread p_thread(&ProcessingManager::Processing_thread_cooperator, processing_manager);
+				boost::thread p_thread(&ProcessingManager::Processing_thread_cooperator, processing_manager, pos_camera);
 				
 			delete(msg);
 			break;

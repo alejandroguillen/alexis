@@ -39,11 +39,12 @@ ProcessingManager::ProcessingManager(NodeManager* nm){
 		
 		//cameras_to_use = 0;
 		//received_cameras = 0;
+		cameraList.reserve(2);
 		node_manager = nm;
 		frame_id = -1;
 		next_detection_threshold = 0;
 		//startTimer();
-		//cameraList.reserve(2);
+
 	}
 }
 
@@ -86,8 +87,11 @@ void ProcessingManager::addCameraData(DATC_param_t* datc_param_camera, DataCTAMs
 	temp_cam.Pdip = 10000;
 	temp_cam.Pe = 1000;
 	
-	cameraList.push_back(temp_cam);
-	//cameraList[temp_cam.id]=temp_cam;
+	//cameraList.push_back(temp_cam);
+	int i = temp_cam.id - 1;
+	//cameraList.insert(cameraList.begin() + i, temp_cam);
+	cameraList[i] = temp_cam;
+
 }
 
 void ProcessingManager::sendACKMessage(int i){
@@ -112,18 +116,18 @@ void ProcessingManager::send_DATA_ATC_Message(int i, int frame_id, double detTim
 	delete(atc_msg);	
 }
 
-void ProcessingManager::Processing_thread_cooperator(){
+void ProcessingManager::Processing_thread_cooperator(int i){
 	cout << "NM: I'm entering the Processing thread " << endl;
 	//boost::mutex monitor;
 	//boost::mutex::scoped_lock lk(monitor);
-	int i = 0;
+	//int i = 0;
 	//decode the image (should become a task)
 	cv::Mat slice;
 	slice = imdecode(cameraList[i].data,CV_LOAD_IMAGE_GRAYSCALE);
 
 	
 	//send ACK_SLICE_MESSAGE
-	cout << "Sending ACK_SLICE_MESSAGE to Camera " << i << endl;
+	cout << "Sending ACK_SLICE_MESSAGE to Camera " << i + 1 << endl;
 	//LOCK
 	sendACKMessage(i);
 	//UNLOCK
@@ -222,14 +226,14 @@ void ProcessingManager::Processing_thread_cooperator(){
 	cout << "and " << (int)(features.rows) << "features" << endl;
 
 	//send DataATCMsg
-	cout << "send DataATCMsg to Camera" << i << endl;
+	cout << "send DataATCMsg to Camera" << i + 1 << endl;
 	//LOCK
 	send_DATA_ATC_Message(i, frame_id, detTime, descTime, kencTime, fencTime, features.rows, keypoints.size(), ft_bitstream, kp_bitstream);
 	//UNLOCK
 	cout << "NM: exiting the wifi tx thread" << endl;
 
 	//cur_state = IDLE;
-	removeCamera(cameraList[i].connection);
+	//removeCamera(cameraList[i].connection); it's not necessary
 }
 
 void ProcessingManager::removeCamera(Connection* c){

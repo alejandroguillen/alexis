@@ -56,7 +56,7 @@ public:
 	void addCameraData(DATC_param_t* datc_param_camera, DataCTAMsg* msg, Connection* c);
 	void sendACKMessage(int i);
 	void send_DATA_ATC_Message(int i, int frame_id, double detTime, double descTime, double kencTime, double fencTime, int numFeat, int numKpts, vector<uchar>& features_data, vector<uchar>& keypoints_data);
-	void Processing_thread_cooperator();
+	void Processing_thread_cooperator(int i);
 	void removeCamera(Connection* c);
 
 			
