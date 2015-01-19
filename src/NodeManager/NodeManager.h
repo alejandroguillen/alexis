@@ -120,14 +120,15 @@ private:
 	VisualFeatureEncoding *encoder;
 	VisualFeatureDecoding *decoder;
 	OffloadingManager *offloading_manager;
-	ProcessingManager *processing_manager;
+	std::vector<ProcessingManager*> processing_manager;
+	//ProcessingManager *processing_manager2;
 	
 	boost::thread p_thread;
 	
 	
-	bool waitcamera2;
-	boost::mutex m_mutex2;
-	boost::condition m_condition2;
+	//bool waitcamera2;
+	//boost::mutex m_mutex2;
+	//boost::condition m_condition2;
 };
 
 #endif

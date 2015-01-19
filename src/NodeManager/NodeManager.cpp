@@ -43,16 +43,24 @@ NodeManager::NodeManager(NodeType nt, string ID){
 		break;
 	}
 	case COOPERATOR:{
-		BRISK_detParams detPrms(60,4);
+		//BRISK_detParams detPrms(60,4);
 		
-		BRISK_descParams dscPrms;
-		extractor = new VisualFeatureExtraction();
-		extractor->setDetector("BRISK", &detPrms);
-		extractor->setDescriptor("BRISK",&dscPrms);
+		//BRISK_descParams dscPrms;
+		//extractor = new VisualFeatureExtraction();
+		//extractor->setDetector("BRISK", &detPrms);
+		//extractor->setDescriptor("BRISK",&dscPrms);
 
-		encoder = new VisualFeatureEncoding();
+		//encoder = new VisualFeatureEncoding();
+
+		//processing_manager.reserve(2);
 		
-		processing_manager = new ProcessingManager(this);
+		for(int i=0;i<2;i++){
+
+			processing_manager.push_back(new ProcessingManager(this,i));
+			
+		}
+		//processing_manager = new ProcessingManager(this,1);
+		//processing_manager2 = new ProcessingManager(this,2);
 
 		break;
 	}
@@ -64,7 +72,7 @@ NodeManager::NodeManager(NodeType nt, string ID){
 	received_notifications = 0;
 	outgoing_msg_seq_num = 255;
 	frame_id = -1;
-	waitcamera2=true;
+	//waitcamera2=true;
 }
 
 NodeType NodeManager::getNodeType(){
@@ -244,11 +252,15 @@ void NodeManager::notify_msg(Message *msg){
 				std::set<Connection*>::iterator it = connections.begin();
 				int tmp = connections.size();
 				int pos_camera = msg->getSource()-1;
+				if(tmp>2){
 				std::advance(it, pos_camera);
+				}
 				Connection* cn = *it;
 				
-				processing_manager->addCameraData(&datc_param_camera[pos_camera],(DataCTAMsg*)msg,cn);
-				boost::thread p_thread(&ProcessingManager::Processing_thread_cooperator, processing_manager, pos_camera);
+				processing_manager[pos_camera]->addCameraData(&datc_param_camera[pos_camera],(DataCTAMsg*)msg,cn);
+				
+				processing_manager[pos_camera]->start(pos_camera);
+				//boost::thread p_thread(&ProcessingManager::Processing_thread_cooperator, processing_manager, pos_camera);
 				
 			delete(msg);
 			break;

@@ -20,15 +20,42 @@
 
 using namespace std;
 
-ProcessingManager::ProcessingManager(NodeManager* nm){
+ProcessingManager::ProcessingManager(NodeManager* nm, int i){
 	{
-		cameraList.reserve(2);
+		//processcond.push_back(false);
+		//processcond.reserve(2);
+
+		//processcond[i] = 0;
+		//thread_mutex.reserve(2);
+		//thread_mutex.push_back(new boost::mutex);
+		
+		//boost::mutex m_mutex[i];
+		//boost::condition m_condition[i];
+		BRISK_detParams detPrms(60,4);
+		BRISK_descParams dscPrms;
+		extractor = new VisualFeatureExtraction();
+		extractor->setDetector("BRISK", &detPrms);
+		extractor->setDescriptor("BRISK",&dscPrms);
+		encoder = new VisualFeatureEncoding();
+		
+		processcond = false;
 		node_manager = nm;
+		//cameraList.reserve(2);
 		frame_id = -1;
 		next_detection_threshold = 0;
 		waitcamera=true;
+		p_thread = boost::thread(&ProcessingManager::Processing_thread_cooperator, this, i);
 
 	}
+}
+
+void ProcessingManager::start(int i){
+
+		boost::mutex::scoped_lock lock(thread_mutex);
+		processcond = true;
+		//thread_condition[i].notify_one();
+		thread_condition.notify_one();
+
 }
 
 void ProcessingManager::addCameraData(DATC_param_t* datc_param_camera, DataCTAMsg* msg, Connection* c){
@@ -56,19 +83,22 @@ void ProcessingManager::addCameraData(DATC_param_t* datc_param_camera, DataCTAMs
 	temp_cam.Pe = 1000;
 	//put on the list
 
+	/*
 	auto it = cameraList.begin();
 	it=it+temp_cam.id;
 	it--;
 	cameraList.insert(it,temp_cam);
+	*/
 	//int i = temp_cam.id - 1;
 	//cameraList[i] = temp_cam;
+	cameraList = temp_cam;
 
 }
 
 void ProcessingManager::sendWiFiMessage(int i, Message *msg){
 		
-	msg->setTcpConnection(cameraList[i].connection);
-	msg->setSource(cameraList[i].destination);
+	msg->setTcpConnection(cameraList.connection);
+	msg->setSource(cameraList.destination);
 	msg->setDestination(i+1);
 			
 	node_manager->AddTask(msg);
@@ -76,11 +106,17 @@ void ProcessingManager::sendWiFiMessage(int i, Message *msg){
 
 
 void ProcessingManager::Processing_thread_cooperator(int i){
+while(1){
 
+	boost::mutex::scoped_lock lock(thread_mutex);
+	while(processcond == false){
+		thread_condition.wait(lock);
+	}
 	cout << "PM: I'm entering the Processing thread "<< i+1 << endl;
 	
+	
 	cv::Mat slice;
-	slice = imdecode(cameraList[i].data,CV_LOAD_IMAGE_GRAYSCALE);
+	slice = imdecode(cameraList.data,CV_LOAD_IMAGE_GRAYSCALE);
 
 	//send ACK_SLICE_MESSAGE
 	cout << "Sending ACK_SLICE_MESSAGE to Camera " << i + 1 << endl;
@@ -89,15 +125,15 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 	cout << "NM: exiting the wifi tx thread" << endl;
 	
 	// Extract the keypoints
-	BRISK_detParams detPrms(60,4);
-	BRISK_descParams dscPrms;
+	//BRISK_detParams detPrms(60,4);
+	//BRISK_descParams dscPrms;
 	
-	extractor = new VisualFeatureExtraction();
+	//extractor = new VisualFeatureExtraction();
 	
-	extractor->setDetector("BRISK", &detPrms);
-	extractor->setDescriptor("BRISK",&dscPrms);
+	//extractor->setDetector("BRISK", &detPrms);
+	//extractor->setDescriptor("BRISK",&dscPrms);
 		
-	extractor->setDetThreshold("BRISK",cameraList[i].detection_threshold);
+	extractor->setDetThreshold("BRISK",cameraList.detection_threshold);
 	double detTime = getTickCount();
 	vector<KeyPoint> keypoints;
 	extractor->extractKeypoints(slice,keypoints);
@@ -105,7 +141,7 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 
 	cout << "PM: ended extract_keypoints_task" << endl;
 	cout << "extracted " << (int)keypoints.size() << "keypoints" << endl;
-    cerr << "extracted " << (int)keypoints.size() << "keypoints\tDetThreshold=" << cameraList[i].detection_threshold << endl;
+    cerr << "extracted " << (int)keypoints.size() << "keypoints\tDetThreshold=" << cameraList.detection_threshold << endl;
 
 	//Extract features
 	std::cout<<std::dec;
@@ -115,14 +151,14 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 	
 	extractor->extractFeatures(slice,keypoints,features);
 	descTime = (getTickCount()-descTime)/getTickFrequency();
-	extractor->cutFeatures(keypoints,features,cameraList[i].max_features);
+	extractor->cutFeatures(keypoints,features,cameraList.max_features);
 	
 	cout << "now extracted " << (int)keypoints.size() << " keypoints" << endl;
 
 	//features serialization
 	vector<uchar> ft_bitstream;
 	vector<uchar> kp_bitstream;
-	encoder = new VisualFeatureEncoding();
+	//encoder = new VisualFeatureEncoding();
 	int method = 0;
 	/*if(method==0)// dummy
 	{
@@ -172,13 +208,16 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 	sendWiFiMessage(i, atc_msg);
 
 	cout << "PM: exiting the wifi tx thread" << i+1 << endl;
-
+	delete(atc_msg);
 	//cur_state = IDLE;
+	processcond = false;
 	//removeCamera(cameraList[i].connection); not necessary 
+}
 }
 
 void ProcessingManager::removeCamera(Connection* c){
-	for(int i=0;i<cameraList.size();i++){
+
+	/*for(int i=0;i<cameraList.size();i++){
 		camera temp_cam = cameraList[i];
 		if(temp_cam.connection == c){
 			std::cerr << "removed Data Camera " << temp_cam.id << endl;
@@ -186,5 +225,5 @@ void ProcessingManager::removeCamera(Connection* c){
 
 			cameraList.erase(cameraList.begin()+i);
 		}
-	}
+	}*/
 }

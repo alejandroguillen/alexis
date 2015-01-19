@@ -15,6 +15,8 @@
 #include "TxSpeedEstimator.h"
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/thread.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
 
 using namespace std;
 using namespace cv;
@@ -40,8 +42,9 @@ typedef struct camera{
 
 class ProcessingManager{
 public:
-	ProcessingManager(NodeManager* nm);
+	ProcessingManager(NodeManager* nm, int i);
 	
+	void start(int i);
 	void addCameraData(DATC_param_t* datc_param_camera, DataCTAMsg* msg, Connection* c);
 	void sendWiFiMessage(int i, Message *msg);
 	void Processing_thread_cooperator(int i);
@@ -51,7 +54,8 @@ private:
 
 	int frame_id;
 	double next_detection_threshold;
-	vector<camera> cameraList;
+	//vector<camera> cameraList;
+	camera cameraList;
 
 	NodeManager* node_manager;
 	
@@ -63,7 +67,14 @@ private:
 	
 	bool waitcamera;
 	boost::mutex m_mutex;
-	boost::condition m_condition;
+	//boost::condition m_condition;
+	
+	//vector<bool> processcond;
+	bool processcond;
+	//boost::ptr_vector<boost::mutex> thread_mutex;
+	boost::mutex thread_mutex;
+	//boost::ptr_vector<boost::condition> thread_condition;
+	boost::condition thread_condition;
 		
 };
 
