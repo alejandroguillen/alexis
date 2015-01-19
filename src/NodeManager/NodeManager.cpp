@@ -64,6 +64,7 @@ NodeManager::NodeManager(NodeType nt, string ID){
 	received_notifications = 0;
 	outgoing_msg_seq_num = 255;
 	frame_id = -1;
+	waitcamera2=true;
 }
 
 NodeType NodeManager::getNodeType(){
@@ -104,8 +105,6 @@ void NodeManager::notify_msg(Message *msg){
 			//update system state and start cta processing
 			cta_param.quality_factor = ((StartCTAMsg*)msg)->getQualityFactor();
 			cta_param.num_slices = ((StartCTAMsg*)msg)->getNumSlices();
-			//ALEXIS parameter to get camera_id
-			//camera_id = msg->getDestination();
 
 			//m_thread = boost::thread(&NodeManager::CTA_processing_thread, this);
 
@@ -151,9 +150,6 @@ void NodeManager::notify_msg(Message *msg){
 
 			atc_param.num_feat_per_block = ((StartATCMsg*)msg)->getNumFeatPerBlock();
 						
-			//ALEXIS parameter to get camera_id
-			//camera_id = msg->getDestination();
-
 			//if camera, start ATC processing with ATC params
 			//m_thread = boost::thread(&NodeManager::ATC_processing_thread, this);
 			if(cur_state == IDLE){
@@ -196,9 +192,6 @@ void NodeManager::notify_msg(Message *msg){
 			datc_param.num_feat_per_block = ((StartDATCMsg*)msg)->getNumFeatPerBlock();
 			datc_param.num_cooperators = ((StartDATCMsg*)msg)->getNumCooperators();
 			
-			//NOALEXIS parameter to get camera_id
-			//camera_id = msg->getDestination();
-
 			int num_available_coop = offloading_manager->getNumAvailableCoop();
 			if(cur_state==IDLE && num_available_coop >= ((StartDATCMsg*)msg)->getNumCooperators()){
 				cur_state = ACTIVE;
@@ -249,22 +242,12 @@ void NodeManager::notify_msg(Message *msg){
 
 				std::set<Connection*> connections = radioSystem_ptr->getWiFiConnections();
 				std::set<Connection*>::iterator it = connections.begin();
-				//ALEXIS 09/01 ACK MESSAGE problem
 				int tmp = connections.size();
 				int pos_camera = msg->getSource()-1;
 				std::advance(it, pos_camera);
-				/*if(tmp > 1){   //if because Camera1 off -> error Camera2
-					int ack = msg->getSource();
-					ack--;
-					std::advance(it, ack);
-				}
-				//*/
 				Connection* cn = *it;
-				//ProcessingManager processing_manager2;
+				
 				processing_manager->addCameraData(&datc_param_camera[pos_camera],(DataCTAMsg*)msg,cn);
-				//ProcessingManager w;
-				//boost::thread p_thread(boost::bind(&ProcessingManager::Processing_thread_cooperator, msg->getSource(), &w)); //this??
-				//boost::thread p_thread(&ProcessingManager::Processing_thread_cooperator, processing_manager);
 				boost::thread p_thread(&ProcessingManager::Processing_thread_cooperator, processing_manager, pos_camera);
 				
 			delete(msg);
@@ -347,6 +330,44 @@ void NodeManager::notify_msg(Message *msg){
 		break;
 		
 	}
+}
+
+
+void NodeManager::AddTask(Message* msg){
+	Task *cur_task;
+
+	cur_task = new SendWiFiMessageTask(msg);
+	
+	/*
+	if(msg->getDestination()==1){
+	waitcamera2 = true;
+	cout << "PM: Waiting Camera 2" << endl;
+	{
+		boost::mutex::scoped_lock lock(m_mutex2);
+		while(waitcamera2){
+			m_condition2.wait(lock);
+		}
+	}
+	cout << "PM: Camera 1 awakes" << endl;
+	}else{
+		
+		cout << "PM: Awaking Camera 1" << endl;
+		boost::mutex::scoped_lock lock(m_mutex2);
+		waitcamera2 = false;
+		m_condition2.notify_one();
+	}
+	*/
+
+	taskManager_ptr->addTask(cur_task);
+	cout << "NM: Waiting the end of the send_message_task" << endl;
+	{
+		boost::mutex::scoped_lock lk(cur_task->task_monitor);
+		while(!cur_task->completed){
+			cur_task_finished.wait(lk);
+		}
+	}
+	cout << "NM: ended send_message_task!" << endl;
+	delete((SendWiFiMessageTask*)cur_task);
 }
 
 

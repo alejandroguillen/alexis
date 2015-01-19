@@ -90,6 +90,7 @@ public:
 	//void sendTestPacket(Message* msg);
 	int node_id; //ALEXIS
 	void AddCameraMessage(int cameraid); //ALEXIS 11/01 ADD CAMERA MESSAGE
+	void AddTask(Message* msg);
 private:
 	SystemState cur_state;
 	NodeType node_type;
@@ -122,6 +123,11 @@ private:
 	ProcessingManager *processing_manager;
 	
 	boost::thread p_thread;
+	
+	
+	bool waitcamera2;
+	boost::mutex m_mutex2;
+	boost::condition m_condition2;
 };
 
 #endif

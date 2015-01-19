@@ -6,6 +6,7 @@
  */
 #include <stdlib.h>
 #include <iostream>
+#include <vector>
 #include "NodeManager/NodeManager.h"
 #include "Tasks/Tasks.h"
 #include "Messages/DataATCMsg.h"
@@ -16,34 +17,16 @@
 #include "RadioSystem/OffloadingManager.h"
 #include "RadioSystem/ProcessingManager.h"
 
-using namespace std;
-/*void ProcessingManager::set_radioSystem(RadioSystem *rs){
-	radioSystem_ptr = rs;
-}*/
 
-/*ProcessingManager::ProcessingManager(NodeManager* nm){
-	iop(),
-	t(iop),
-	work(iop)
-	{
-		cameras_to_use = 0;
-		received_cameras = 0;
-		node_manager = nm;
-		frame_id = -1;
-		next_detection_threshold = 0;
-		//startTimer();
-	}
-}*/
+using namespace std;
+
 ProcessingManager::ProcessingManager(NodeManager* nm){
 	{
-		
-		//cameras_to_use = 0;
-		//received_cameras = 0;
 		cameraList.reserve(2);
 		node_manager = nm;
 		frame_id = -1;
 		next_detection_threshold = 0;
-		//startTimer();
+		waitcamera=true;
 
 	}
 }
@@ -51,26 +34,12 @@ ProcessingManager::ProcessingManager(NodeManager* nm){
 void ProcessingManager::addCameraData(DATC_param_t* datc_param_camera, DataCTAMsg* msg, Connection* c){
 	camera temp_cam;
 
-
-	//Connection
-	/*std::set<Connection*> connections = radioSystem_ptr->getWiFiConnections();
-	std::set<Connection*>::iterator c = connections.begin();
-	int tmp = connections.size();
-	if(tmp > 1){   //if because Camera1 off -> error Camera2
-		int ack = msg->getSource();
-		ack--;
-		std::advance(it, ack);
-	}*/
 	temp_cam.connection = c;
-	
 	temp_cam.id = msg->getSource();
 	temp_cam.destination = msg->getDestination();
-
 	//parameters
-
 	temp_cam.detection_threshold = datc_param_camera->detection_threshold;
 	temp_cam.max_features = datc_param_camera->max_features;
-
 	//Data
 	OCTET_STRING_t oct_data = msg->getData();
 	uint8_t* imbuf = oct_data.buf;
@@ -80,63 +49,46 @@ void ProcessingManager::addCameraData(DATC_param_t* datc_param_camera, DataCTAMs
 		jpeg_bitstream.push_back(imbuf[i]);
 	}
 	temp_cam.data = jpeg_bitstream;
-	
 	//Set initial values for the parameters:
 	temp_cam.bandwidth = 20e6;
 	temp_cam.Pdpx = 3.2e6;
 	temp_cam.Pdip = 10000;
 	temp_cam.Pe = 1000;
-	
-	//cameraList.push_back(temp_cam);
-	int i = temp_cam.id - 1;
-	//cameraList.insert(cameraList.begin() + i, temp_cam);
-	cameraList[i] = temp_cam;
+	//put on the list
+
+	auto it = cameraList.begin();
+	it=it+temp_cam.id;
+	it--;
+	cameraList.insert(it,temp_cam);
+	//int i = temp_cam.id - 1;
+	//cameraList[i] = temp_cam;
 
 }
 
-void ProcessingManager::sendACKMessage(int i){
-	
-	ACKsliceMsg *ackslice_msg = new ACKsliceMsg(frame_id);
-	ackslice_msg->setTcpConnection(cameraList[i].connection);
-	ackslice_msg->setSource(cameraList[i].destination);
-	ackslice_msg->setDestination(i);
-	cameraList[i].connection->writeMsg(ackslice_msg);
+void ProcessingManager::sendWiFiMessage(int i, Message *msg){
+		
+	msg->setTcpConnection(cameraList[i].connection);
+	msg->setSource(cameraList[i].destination);
+	msg->setDestination(i+1);
 			
-	delete(ackslice_msg);		
+	node_manager->AddTask(msg);
 }
 
-void ProcessingManager::send_DATA_ATC_Message(int i, int frame_id, double detTime, double descTime, double kencTime, double fencTime, int numFeat, int numKpts, vector<uchar>& features_data, vector<uchar>& keypoints_data){
-
-	DataATCMsg *atc_msg = new DataATCMsg(frame_id, 0, 1, detTime, descTime, kencTime, fencTime, 0, numFeat, numKpts, features_data, keypoints_data);
-	atc_msg->setTcpConnection(cameraList[i].connection);
-	atc_msg->setSource(cameraList[i].destination);
-	atc_msg->setDestination(i);
-	cameraList[i].connection->writeMsg(atc_msg);
-			
-	delete(atc_msg);	
-}
 
 void ProcessingManager::Processing_thread_cooperator(int i){
-	cout << "NM: I'm entering the Processing thread " << endl;
-	//boost::mutex monitor;
-	//boost::mutex::scoped_lock lk(monitor);
-	//int i = 0;
-	//decode the image (should become a task)
+
+	cout << "PM: I'm entering the Processing thread "<< i+1 << endl;
+	
 	cv::Mat slice;
 	slice = imdecode(cameraList[i].data,CV_LOAD_IMAGE_GRAYSCALE);
 
-	
 	//send ACK_SLICE_MESSAGE
 	cout << "Sending ACK_SLICE_MESSAGE to Camera " << i + 1 << endl;
-	//LOCK
-	sendACKMessage(i);
-	//UNLOCK
+	ACKsliceMsg *ackslice_msg = new ACKsliceMsg(frame_id);
+	sendWiFiMessage(i, ackslice_msg);
 	cout << "NM: exiting the wifi tx thread" << endl;
 	
-	
 	// Extract the keypoints
-	//cur_task = new ExtractKeypointsTask(extractor,slice,datc_param_camera[i].detection_threshold);
-	
 	BRISK_detParams detPrms(60,4);
 	BRISK_descParams dscPrms;
 	
@@ -151,18 +103,14 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 	extractor->extractKeypoints(slice,keypoints);
 	detTime = (getTickCount()-detTime)/getTickFrequency();
 
-	cout << "NM: ended extract_keypoints_task" << endl;
-
+	cout << "PM: ended extract_keypoints_task" << endl;
 	cout << "extracted " << (int)keypoints.size() << "keypoints" << endl;
     cerr << "extracted " << (int)keypoints.size() << "keypoints\tDetThreshold=" << cameraList[i].detection_threshold << endl;
 
-
 	//Extract features
 	std::cout<<std::dec;
-	//cur_task = new ExtractFeaturesTask(extractor,slice,keypoints,datc_param_camera[i].max_features);
 	
 	double descTime = getTickCount();
-	
 	cv::Mat features;
 	
 	extractor->extractFeatures(slice,keypoints,features);
@@ -171,14 +119,10 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 	
 	cout << "now extracted " << (int)keypoints.size() << " keypoints" << endl;
 
-	
 	//features serialization
 	vector<uchar> ft_bitstream;
 	vector<uchar> kp_bitstream;
-	//cur_task = new EncodeFeaturesTask(encoder,"BRISK",features,0);
-	
 	encoder = new VisualFeatureEncoding();
-	
 	int method = 0;
 	/*if(method==0)// dummy
 	{
@@ -187,7 +131,6 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 				features,
 				ft_bitstream);
 		fencTime = (getTickCount()-fencTime)/getTickFrequency();
-
 	}
 	else // entropy coding
 	{
@@ -197,16 +140,14 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 				ft_bitstream);
 		fencTime = (getTickCount()-fencTime)/getTickFrequency();
 	}*/
-
-	//cout << "NM: ended encode_features_task" << endl;
+	//cout << "PM: ended encode_features_task" << endl;
+	
 	double fencTime = getTickCount();
 	encoder->dummy_encodeBinaryDescriptors("BRISK",
 			features,
 			ft_bitstream);
 	fencTime = (getTickCount()-fencTime)/getTickFrequency();
 
-	//cur_task = new EncodeKeypointsTask(encoder,keypoints,640,480,true,0);
-	
 	/*if(method==0){ // dummy
 		double kencTime = getTickCount();
 		encoder->dummy_encodeKeyPoints(keypoints,kp_bitstream);
@@ -227,26 +168,22 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 
 	//send DataATCMsg
 	cout << "send DataATCMsg to Camera" << i + 1 << endl;
-	//LOCK
-	send_DATA_ATC_Message(i, frame_id, detTime, descTime, kencTime, fencTime, features.rows, keypoints.size(), ft_bitstream, kp_bitstream);
-	//UNLOCK
-	cout << "NM: exiting the wifi tx thread" << endl;
+	DataATCMsg *atc_msg = new DataATCMsg(frame_id, 0, 1, detTime, descTime, kencTime, fencTime, 0, features.rows, keypoints.size(), ft_bitstream, kp_bitstream);
+	sendWiFiMessage(i, atc_msg);
+
+	cout << "PM: exiting the wifi tx thread" << i+1 << endl;
 
 	//cur_state = IDLE;
-	//removeCamera(cameraList[i].connection); it's not necessary
+	//removeCamera(cameraList[i].connection); not necessary 
 }
 
 void ProcessingManager::removeCamera(Connection* c){
 	for(int i=0;i<cameraList.size();i++){
 		camera temp_cam = cameraList[i];
 		if(temp_cam.connection == c){
-			//delete temp_cam.processing_speed_estimator;
-			//delete temp_cam.tx_speed_estimator;
-			//ALEXIS 09/01 COOP ID
 			std::cerr << "removed Data Camera " << temp_cam.id << endl;
 			int m = temp_cam.id;
-			id.erase(m);
-			//
+
 			cameraList.erase(cameraList.begin()+i);
 		}
 	}
