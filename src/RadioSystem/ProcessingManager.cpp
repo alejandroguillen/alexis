@@ -49,7 +49,7 @@ ProcessingManager::ProcessingManager(NodeManager* nm, int i){
 	}
 }
 
-void ProcessingManager::start(int i){
+void ProcessingManager::start(){
 
 		boost::mutex::scoped_lock lock(thread_mutex);
 		processcond = true;

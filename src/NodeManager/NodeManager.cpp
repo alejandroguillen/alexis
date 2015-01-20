@@ -252,14 +252,14 @@ void NodeManager::notify_msg(Message *msg){
 				std::set<Connection*>::iterator it = connections.begin();
 				int tmp = connections.size();
 				int pos_camera = msg->getSource()-1;
-				if(tmp>2){
+				if(tmp>1){
 				std::advance(it, pos_camera);
 				}
 				Connection* cn = *it;
 				
 				processing_manager[pos_camera]->addCameraData(&datc_param_camera[pos_camera],(DataCTAMsg*)msg,cn);
 				
-				processing_manager[pos_camera]->start(pos_camera);
+				processing_manager[pos_camera]->start();
 				//boost::thread p_thread(&ProcessingManager::Processing_thread_cooperator, processing_manager, pos_camera);
 				
 			delete(msg);
