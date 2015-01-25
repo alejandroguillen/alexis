@@ -25,6 +25,7 @@ using namespace cv;
 #define INITIAL_DETECTION_THRESHOLD 50
 
 class Connection;
+//class NodeManager;
 
 typedef struct camera{
 	Connection* connection;
@@ -43,10 +44,10 @@ typedef struct camera{
 class ProcessingManager{
 public:
 	ProcessingManager(NodeManager* nm, int i);
-	
+
 	void start();
 	void addCameraData(DATC_param_t* datc_param_camera, DataCTAMsg* msg, Connection* c);
-	void sendWiFiMessage(int i, Message *msg);
+	//void sendWiFiMessage(int i, Message *msg);
 	void Processing_thread_cooperator(int i);
 	void removeCamera(Connection* c);
 			

@@ -31,13 +31,13 @@ ProcessingManager::ProcessingManager(NodeManager* nm, int i){
 		
 		//boost::mutex m_mutex[i];
 		//boost::condition m_condition[i];
-		BRISK_detParams detPrms(60,4);
+		/*BRISK_detParams detPrms(60,4);
 		BRISK_descParams dscPrms;
 		extractor = new VisualFeatureExtraction();
 		extractor->setDetector("BRISK", &detPrms);
 		extractor->setDescriptor("BRISK",&dscPrms);
 		encoder = new VisualFeatureEncoding();
-		
+		*/
 		processcond = false;
 		node_manager = nm;
 		//cameraList.reserve(2);
@@ -95,6 +95,7 @@ void ProcessingManager::addCameraData(DATC_param_t* datc_param_camera, DataCTAMs
 
 }
 
+/*
 void ProcessingManager::sendWiFiMessage(int i, Message *msg){
 		
 	msg->setTcpConnection(cameraList.connection);
@@ -103,7 +104,7 @@ void ProcessingManager::sendWiFiMessage(int i, Message *msg){
 			
 	node_manager->AddTask(msg);
 }
-
+*/
 
 void ProcessingManager::Processing_thread_cooperator(int i){
 while(1){
@@ -113,8 +114,9 @@ while(1){
 		thread_condition.wait(lock);
 	}
 	cout << "PM: I'm entering the Processing thread "<< i+1 << endl;
-	
-	
+
+	node_manager->DATC_processing_thread_cooperator(i,cameraList.data, cameraList.connection, cameraList.detection_threshold, cameraList.max_features);
+	/*
 	cv::Mat slice;
 	slice = imdecode(cameraList.data,CV_LOAD_IMAGE_GRAYSCALE);
 
@@ -177,7 +179,7 @@ while(1){
 		fencTime = (getTickCount()-fencTime)/getTickFrequency();
 	}*/
 	//cout << "PM: ended encode_features_task" << endl;
-	
+	/*
 	double fencTime = getTickCount();
 	encoder->dummy_encodeBinaryDescriptors("BRISK",
 			features,
@@ -194,7 +196,7 @@ while(1){
 		double kencTime = getTickCount();
 		encoder->encodeKeyPoints(keypoints,kp_bitstream,640,480,true);
 		kencTime = (getTickCount()-kencTime)/getTickFrequency();
-	}*/
+	}*//*
 	double kencTime = getTickCount();
 	encoder->dummy_encodeKeyPoints(keypoints,kp_bitstream);
 	kencTime = (getTickCount()-kencTime)/getTickFrequency();
@@ -209,6 +211,8 @@ while(1){
 
 	cout << "PM: exiting the wifi tx thread" << i+1 << endl;
 	delete(atc_msg);
+	*/
+	
 	//cur_state = IDLE;
 	processcond = false;
 	//removeCamera(cameraList[i].connection); not necessary 

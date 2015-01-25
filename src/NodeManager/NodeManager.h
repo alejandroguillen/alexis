@@ -90,7 +90,8 @@ public:
 	//void sendTestPacket(Message* msg);
 	int node_id; //ALEXIS
 	void AddCameraMessage(int cameraid); //ALEXIS 11/01 ADD CAMERA MESSAGE
-	void AddTask(Message* msg);
+	void DATC_processing_thread_cooperator(int i, vector<uchar> data, Connection* c, double detection_threshold, int max_features);
+
 private:
 	SystemState cur_state;
 	NodeType node_type;
@@ -112,7 +113,7 @@ private:
 	void CTA_processing_thread();
 	void ATC_processing_thread();
 	void DATC_processing_thread();
-	void DATC_processing_thread_cooperator(DataCTAMsg* msg);
+	//void DATC_processing_thread_cooperator(camera* cameraList);
 	void DATC_store_features(DataATCMsg* msg);
 
 	ImageAcquisition *imgAcq;

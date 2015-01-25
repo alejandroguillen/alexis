@@ -43,14 +43,14 @@ NodeManager::NodeManager(NodeType nt, string ID){
 		break;
 	}
 	case COOPERATOR:{
-		//BRISK_detParams detPrms(60,4);
+		BRISK_detParams detPrms(60,4);
 		
-		//BRISK_descParams dscPrms;
-		//extractor = new VisualFeatureExtraction();
-		//extractor->setDetector("BRISK", &detPrms);
-		//extractor->setDescriptor("BRISK",&dscPrms);
+		BRISK_descParams dscPrms;
+		extractor = new VisualFeatureExtraction();
+		extractor->setDetector("BRISK", &detPrms);
+		extractor->setDescriptor("BRISK",&dscPrms);
 
-		//encoder = new VisualFeatureEncoding();
+		encoder = new VisualFeatureEncoding();
 
 		//processing_manager.reserve(2);
 		
@@ -345,10 +345,8 @@ void NodeManager::notify_msg(Message *msg){
 }
 
 
-void NodeManager::AddTask(Message* msg){
-	Task *cur_task;
+/*void NodeManager::AddDATC(camera* cameraList){
 
-	cur_task = new SendWiFiMessageTask(msg);
 	
 	/*
 	if(msg->getDestination()==1){
@@ -370,17 +368,8 @@ void NodeManager::AddTask(Message* msg){
 	}
 	*/
 
-	taskManager_ptr->addTask(cur_task);
-	cout << "NM: Waiting the end of the send_message_task" << endl;
-	{
-		boost::mutex::scoped_lock lk(cur_task->task_monitor);
-		while(!cur_task->completed){
-			cur_task_finished.wait(lk);
-		}
-	}
-	cout << "NM: ended send_message_task!" << endl;
-	delete((SendWiFiMessageTask*)cur_task);
-}
+
+//}
 
 
 int NodeManager::notify_endTask(){
@@ -742,7 +731,7 @@ void NodeManager::DATC_processing_thread(){
 	offloading_manager->addKeypointsAndFeatures(kpts,features,null,detTime,descTime,0,0);
 }
 
-void NodeManager::DATC_processing_thread_cooperator(DataCTAMsg* msg){
+void NodeManager::DATC_processing_thread_cooperator(int i, vector<uchar> data, Connection* c, double detection_threshold, int max_features){
 	cout << "NM: I'm entering the DATC_processing thread " << endl;
 
 
@@ -751,6 +740,7 @@ void NodeManager::DATC_processing_thread_cooperator(DataCTAMsg* msg){
 	Task *cur_task;
 	//decode the image (should become a task)
 	cv::Mat slice;
+	/*
 	OCTET_STRING_t oct_data = msg->getData();
 	uint8_t* imbuf = oct_data.buf;
 	int data_size = oct_data.size;
@@ -758,7 +748,8 @@ void NodeManager::DATC_processing_thread_cooperator(DataCTAMsg* msg){
 	for(int i=0;i<data_size;i++){
 		jpeg_bitstream.push_back(imbuf[i]);
 	}
-	slice = imdecode(jpeg_bitstream,CV_LOAD_IMAGE_GRAYSCALE);
+	*/
+	slice = imdecode(data,CV_LOAD_IMAGE_GRAYSCALE);
 
 	/*namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
 	imshow( "Display window", slice );                   // Show our image inside it.
@@ -769,7 +760,7 @@ void NodeManager::DATC_processing_thread_cooperator(DataCTAMsg* msg){
 	//send ACK_SLICE_MESSAGE
 	cout << "Sending ACK_SLICE_MESSAGE" << endl;
 	ACKsliceMsg *ackslice_msg = new ACKsliceMsg(frame_id);
-	std::set<Connection*> connections1 = radioSystem_ptr->getWiFiConnections();
+	/*std::set<Connection*> connections1 = radioSystem_ptr->getWiFiConnections();
 	std::set<Connection*>::iterator it1 = connections1.begin();
 	//ALEXIS 09/01 ACK MESSAGE problem
 	int tmp = connections1.size();
@@ -787,11 +778,11 @@ void NodeManager::DATC_processing_thread_cooperator(DataCTAMsg* msg){
 		std::set<Connection*>::iterator it1 = connections1.end();
 	}
 	//*/
-	Connection* cn1 = *it1;
-	ackslice_msg->setTcpConnection(cn1);
+	//Connection* cn1 = *it1;
+	ackslice_msg->setTcpConnection(c);
 	//ALEXIS
-	ackslice_msg->setSource(msg->getDestination());
-	ackslice_msg->setDestination(msg->getSource());
+	ackslice_msg->setSource(node_id);
+	ackslice_msg->setDestination(i+1);
 	//
 	cur_task = new SendWiFiMessageTask(ackslice_msg);
 	taskManager_ptr->addTask(cur_task);
@@ -805,11 +796,11 @@ void NodeManager::DATC_processing_thread_cooperator(DataCTAMsg* msg){
 	cout << "NM: exiting the wifi tx thread" << endl;
 	delete((SendWiFiMessageTask*)cur_task);
 	
-	int i = msg->getSource(); //ALEXIS 16/12 VECTOR
-	i--; //ALEXIS 16/12 VECTOR only 2 spaces, so it has to be 0 (camera1) or 1 (camera2)
+	//int i = msg->getSource(); //ALEXIS 16/12 VECTOR
+	//i--; //ALEXIS 16/12 VECTOR only 2 spaces, so it has to be 0 (camera1) or 1 (camera2)
 	
 	// Extract the keypoints
-	cur_task = new ExtractKeypointsTask(extractor,slice,datc_param_camera[i].detection_threshold);
+	cur_task = new ExtractKeypointsTask(extractor,slice,detection_threshold);
 	taskManager_ptr->addTask(cur_task);
 	cout << "NM: Waiting the end of the extract_keypoints_task" << endl;
 	while(!cur_task->completed){
@@ -820,13 +811,13 @@ void NodeManager::DATC_processing_thread_cooperator(DataCTAMsg* msg){
 	vector<KeyPoint> kpts = ((ExtractKeypointsTask*)cur_task)->getKeypoints();
 	double detTime = ((ExtractKeypointsTask*)cur_task)->getDetTime();
 	cout << "extracted " << (int)kpts.size() << "keypoints" << endl;
-cerr << "extracted " << (int)kpts.size() << "keypoints\tDetThreshold=" << datc_param_camera[i].detection_threshold << endl;
+cerr << "extracted " << (int)kpts.size() << "keypoints\tDetThreshold=" << detection_threshold << endl;
 
 	delete((ExtractKeypointsTask*)cur_task);
 
 	//Extract features
 	std::cout<<std::dec;
-	cur_task = new ExtractFeaturesTask(extractor,slice,kpts,datc_param_camera[i].max_features);
+	cur_task = new ExtractFeaturesTask(extractor,slice,kpts,max_features);
 	taskManager_ptr->addTask(cur_task);
 	cout << "NM: Waiting the end of the extract_features_task" << endl;
 	while(!cur_task->completed){
@@ -867,7 +858,7 @@ cerr << "extracted " << (int)kpts.size() << "keypoints\tDetThreshold=" << datc_p
 	cout << "and " << (int)(features.rows) << "features" << endl;
 
 	DataATCMsg *atc_msg = new DataATCMsg(frame_id, 0, 1, detTime, descTime, kencTime, fencTime, 0, features.rows, kpts.size(), ft_bitstream, kp_bitstream);
-	std::set<Connection*> connections = radioSystem_ptr->getWiFiConnections();
+	/*std::set<Connection*> connections = radioSystem_ptr->getWiFiConnections();
 	std::set<Connection*>::iterator it = connections1.begin();
 	//ALEXIS 09/01 ACK MESSAGE problem
 	int tmp1 = connections1.size();
@@ -878,10 +869,11 @@ cerr << "extracted " << (int)kpts.size() << "keypoints\tDetThreshold=" << datc_p
 	}
 	//
 	Connection* cn = *it;
-	atc_msg->setTcpConnection(cn);
+	*/
+	atc_msg->setTcpConnection(c);
 	//ALEXIS
-	atc_msg->setSource(msg->getDestination());
-	atc_msg->setDestination(msg->getSource());
+	atc_msg->setSource(node_id);
+	atc_msg->setDestination(i+1);
 	//
 	cur_task = new SendWiFiMessageTask(atc_msg);
 	taskManager_ptr->addTask(cur_task);
@@ -895,7 +887,7 @@ cerr << "extracted " << (int)kpts.size() << "keypoints\tDetThreshold=" << datc_p
 	cout << "NM: exiting the wifi tx thread" << endl;
 	delete((SendWiFiMessageTask*)cur_task);
 
-	cur_state = IDLE;
+	//cur_state = IDLE;
 }
 
 void NodeManager::DATC_store_features(DataATCMsg* msg){
