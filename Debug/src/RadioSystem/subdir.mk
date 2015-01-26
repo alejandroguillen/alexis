@@ -4,6 +4,8 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/RadioSystem/Algorithms.cpp \
+../src/RadioSystem/Coef.cpp \
 ../src/RadioSystem/IncomingMessageQueue.cpp \
 ../src/RadioSystem/LoadBalancing.cpp \
 ../src/RadioSystem/LoadBalancingConfig.cpp \
@@ -15,6 +17,8 @@ CPP_SRCS += \
 ../src/RadioSystem/TxSpeedEstimator.cpp 
 
 OBJS += \
+./src/RadioSystem/Algorithms.o \
+./src/RadioSystem/Coef.o \
 ./src/RadioSystem/IncomingMessageQueue.o \
 ./src/RadioSystem/LoadBalancing.o \
 ./src/RadioSystem/LoadBalancingConfig.o \
@@ -26,6 +30,8 @@ OBJS += \
 ./src/RadioSystem/TxSpeedEstimator.o 
 
 CPP_DEPS += \
+./src/RadioSystem/Algorithms.d \
+./src/RadioSystem/Coef.d \
 ./src/RadioSystem/IncomingMessageQueue.d \
 ./src/RadioSystem/LoadBalancing.d \
 ./src/RadioSystem/LoadBalancingConfig.d \

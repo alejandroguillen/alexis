@@ -88,7 +88,7 @@ src/RadioSystem/OffloadingManager.d: \
  ../src/RadioSystem/lp_solve/lp_mipbb.h \
  ../src/RadioSystem/lp_solve/lp_SOS.h \
  ../src/RadioSystem/ProcessingSpeedEstimator.h \
- ../src/RadioSystem/TxSpeedEstimator.h
+ ../src/RadioSystem/TxSpeedEstimator.h ../src/RadioSystem/Coef.h
 
 ../src/RadioSystem/OffloadingManager.h:
 
@@ -267,3 +267,5 @@ src/RadioSystem/OffloadingManager.d: \
 ../src/RadioSystem/ProcessingSpeedEstimator.h:
 
 ../src/RadioSystem/TxSpeedEstimator.h:
+
+../src/RadioSystem/Coef.h:

@@ -734,7 +734,8 @@ void NodeManager::DATC_processing_thread(){
 void NodeManager::DATC_processing_thread_cooperator(int i, vector<uchar> data, Connection* c, double detection_threshold, int max_features){
 	cout << "NM: I'm entering the DATC_processing thread " << endl;
 
-
+	double processingTime = getTickCount();
+	
 	boost::mutex monitor;
 	boost::mutex::scoped_lock lk(monitor);
 	Task *cur_task;
@@ -856,8 +857,10 @@ cerr << "extracted " << (int)kpts.size() << "keypoints\tDetThreshold=" << detect
 	delete((EncodeKeypointsTask*)cur_task);
 	cout << "sending " << (int)(kpts.size()) << "keypoints" << endl;
 	cout << "and " << (int)(features.rows) << "features" << endl;
-
-	DataATCMsg *atc_msg = new DataATCMsg(frame_id, 0, 1, detTime, descTime, kencTime, fencTime, 0, features.rows, kpts.size(), ft_bitstream, kp_bitstream);
+	
+	processingTime = (getTickCount()-processingTime)/getTickFrequency();
+	
+	DataATCMsg *atc_msg = new DataATCMsg(frame_id, 0, 1, detTime, descTime, kencTime, processingTime, 0, features.rows, kpts.size(), ft_bitstream, kp_bitstream);
 	/*std::set<Connection*> connections = radioSystem_ptr->getWiFiConnections();
 	std::set<Connection*>::iterator it = connections1.begin();
 	//ALEXIS 09/01 ACK MESSAGE problem

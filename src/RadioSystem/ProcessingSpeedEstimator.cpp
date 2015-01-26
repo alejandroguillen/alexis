@@ -7,6 +7,9 @@
 
 #include "ProcessingSpeedEstimator.h"
 
+#include <iostream>
+#include <fstream>
+
 #include <vector>
 #include <gsl/gsl_multifit.h>
 
@@ -103,6 +106,17 @@ int ProcessingSpeedEstimator::AddObservation(float Tdetect, float Textract,
 	gsl_vector_free(y);
 	gsl_vector_free(c);
 	gsl_matrix_free(cov);
+	
+	//std::ifstream configfile(LB_CONFIG_FILE);
+
+	std::ofstream out("./Pdpx.txt");
+	std::ofstream outb("Pdip.txt");
+	std::ofstream outa("Pe.txt");
+	out << Pdpx_ << std::endl;
+	outb << Pdip_ << std::endl;
+	outa << Pe_ << std::endl;
+	out.close();
+	
 	return 0;
 }
 

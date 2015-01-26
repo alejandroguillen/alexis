@@ -90,6 +90,7 @@ src/NodeManager/NodeManager.d: ../src/NodeManager/NodeManager.cpp \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_SOS.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingSpeedEstimator.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/Coef.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingManager.h
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/NodeManager/NodeManager.h:
@@ -273,5 +274,7 @@ src/NodeManager/NodeManager.d: ../src/NodeManager/NodeManager.cpp \
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingSpeedEstimator.h:
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/Coef.h:
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingManager.h:

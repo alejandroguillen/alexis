@@ -15,6 +15,7 @@
 #include "TxSpeedEstimator.h"
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include "Coef.h"
 
 using namespace std;
 using namespace cv;
@@ -52,6 +53,9 @@ typedef struct cooperator{
 	double fencTime;
 	
 	int id; //ALEXIS 09/01 COOP ID
+	Coef* processing_time_coef;
+	double Ptcoef;
+	double processingTime;
 	
 }cooperator;
 
@@ -71,7 +75,7 @@ public:
 
 	//add keypoints and features from cooperators
 	void addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& features,Connection* cn,
-			double detTime, double descTime, double kencTime, double fencTime);
+			double detTime, double descTime, double kencTime, double processingTime);
 
 	//reset variables and keep track of progresses
 //	void createOffloadingTask(int num_cooperators);

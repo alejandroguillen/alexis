@@ -87,7 +87,8 @@ src/Tasks/Tasks.d: ../src/Tasks/Tasks.cpp ../src/Tasks/Tasks.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_mipbb.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_SOS.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingSpeedEstimator.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/Coef.h
 
 ../src/Tasks/Tasks.h:
 
@@ -268,3 +269,5 @@ src/Tasks/Tasks.d: ../src/Tasks/Tasks.cpp ../src/Tasks/Tasks.h \
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingSpeedEstimator.h:
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/Coef.h:

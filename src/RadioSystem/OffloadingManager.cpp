@@ -17,11 +17,14 @@ void OffloadingManager::addCooperator(Connection* c){
 	temp_coop.connection = c;
 	temp_coop.processing_speed_estimator = new ProcessingSpeedEstimator();
 	temp_coop.tx_speed_estimator = new TxSpeedEstimator();
+	temp_coop.processing_time_coef = new Coef();
 	//Set initial values for the parameters:
 	temp_coop.bandwidth = 20e6;
 	temp_coop.Pdpx = 3.2e6;
 	temp_coop.Pdip = 10000;
 	temp_coop.Pe = 1000;
+	
+	temp_coop.Ptcoef = 0,2;
 	
 	//ALEXIS 09/01 COOP ID
 	int m=2;
@@ -65,14 +68,16 @@ Mat OffloadingManager::computeLoads(Mat& image){
 
 	sortCooperators();
 	for(int i=0;i<cooperators_to_use;i++){
-		c.push_back(8*1.0/(cooperatorList[i].bandwidth)); //TODO Check bandwidth units. c should be seconds/bit
+		c.push_back(8*1.0/(cooperatorList[i].bandwidth)); //TODO Check bandwidth units. c should be seconds/bit //BRISK The input 8-bit grayscale image. 
 		pdpx.push_back(cooperatorList[i].Pdpx);
 		pdip.push_back(cooperatorList[i].Pdip);
 		pe.push_back(cooperatorList[i].Pe);
 	}
 
 	//double overlap = OVERLAP;
-	double overlap = (double)168.0/(2*image.cols);
+	double overlap = (double)168.0/(2*image.cols); 
+	//set alphad in configuration file
+	double alphad = 5; //REALLY????
 	loadbalancing.SetImageParameters(image.cols, image.rows, overlap);
 	//Solve:
 	double lpsolveTime = getTickCount();
@@ -236,6 +241,10 @@ void OffloadingManager::estimate_parameters(cooperator* coop) {
 	coop->bandwidth = coop->tx_speed_estimator->getBandwidth();
 	//coop->bandwidth = 8*coop->Npixels/coop->txTime; //FIXME Only for bmp encoding, 8bits per pixel
 
+	//Processing time Coef
+	coop->processing_time_coef->AddObservation(coop->processingTime, coop->Npixels, coop->Nkeypoints);
+	coop->Ptcoef = coop->processing_time_coef->getProcessingTime();
+	
 	std::cerr << " Node: " << coop << std::endl;
 	std::cerr << "estimate_processing_parameters: detTime=" << coop->detTime << "\tdescTime=" << coop->descTime << "\tNpix=" << coop->Npixels << "\tNkp=" << coop->Nkeypoints << "\n";
 	std::cerr << "estimate_processing_parameters: Pdpx=" << coop->Pdpx << "\tPdip=" << coop->Pdip << "\tPe=" << coop->Pe << "\n";
@@ -250,7 +259,7 @@ void OffloadingManager::sortCooperators()
 }
 
 void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& features, Connection* cn,
-		double detTime, double descTime, double kencTime, double fencTime){
+		double detTime, double descTime, double kencTime, double processingTime){
 
 	mut.lock();
 	features_buffer.push_back(features);
@@ -263,7 +272,8 @@ void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& feat
 				cooperatorList[i].detTime = detTime;
 				cooperatorList[i].descTime = descTime;
 				cooperatorList[i].kencTime = kencTime;
-				cooperatorList[i].fencTime = fencTime;
+				//cooperatorList[i].fencTime = fencTime;
+				cooperatorList[i].processingTime = processingTime;
 				//compensate for slicing if keypoints come from a cooperator
 				for(int j=0;j<kpts.size();j++){
 					kpts[j].pt.x = kpts[j].pt.x + cooperatorList[i].col_offset;
