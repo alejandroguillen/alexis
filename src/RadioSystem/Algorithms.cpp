@@ -4,8 +4,8 @@
  *  Created on: 26/jan/2015
  *      Author: Alejandro Guillen
  */
-/*
-#include "LoadBalancing.h"
+
+#include "Algorithms.h"
 #include "LoadBalancingConfig.h"
 #include <fstream>
 
@@ -16,7 +16,7 @@
 #define POS_Fi(i) num_using_nodes_+2+(num_using_nodes_-1)*(num_quantiles_+2)+(i)
 #define POS_IPi(i) (num_using_nodes_+2)+(num_using_nodes_-1)*(num_quantiles_+2)+(num_using_nodes_-1)+(i)
 
-LoadBalancing::LoadBalancing() {
+Algorithms::Algorithms() {
 	fdr_=0;
 	lastM=0;
 	is_lpmodel_created_=false;
@@ -36,19 +36,19 @@ LoadBalancing::LoadBalancing() {
 
 	use_fixed_uniform_cuts_=USE_FIXED_UNIFORM_CUTS_DEFAULT;
 	
-	alphad_ = ALPHAD_DEFAULT;
+	alpha_d_ = ALPHA_D_DEFAULT;
 
-	//Try to read config file in "loadbalancing_config.txt":
+	//Try to read config file in "Algorithms_config.txt":
 	std::ifstream configfile(LB_CONFIG_FILE);
 	if(configfile){
-		std::cout << "LoadBalancing: Reading config from " <<  LB_CONFIG_FILE << std::endl;
+		std::cout << "Algorithms: Reading config from " <<  LB_CONFIG_FILE << std::endl;
 		LoadBalancingConfig lbconfig;
 		lbconfig.ParseConfigFile(LB_CONFIG_FILE);
 		LoadNewConfig(lbconfig);
 	}
 }
 
-LoadBalancing::LoadBalancing(LoadBalancingConfig config) {
+Algorithms::Algorithms(LoadBalancingConfig config) {
 	fdr_=0;
 	lastM=0;
 	is_lpmodel_created_=false;
@@ -68,10 +68,10 @@ LoadBalancing::LoadBalancing(LoadBalancingConfig config) {
 
 	use_fixed_uniform_cuts_=config.use_fixed_uniform_cuts;
 	
-	alphad_ = config.alphad;
+	alpha_d_ = config.alpha_d;
 }
 
-void LoadBalancing::LoadNewConfig(LoadBalancingConfig config) {
+void Algorithms::LoadNewConfig(LoadBalancingConfig config) {
 	quantiles_available_=false;
 
 	reconstruction_method_=config.reconstruction_method;
@@ -83,24 +83,23 @@ void LoadBalancing::LoadNewConfig(LoadBalancingConfig config) {
 	solver_timeout_=config.solver_timeout;
 
 	use_fixed_uniform_cuts_=config.use_fixed_uniform_cuts;
-	alphad_ = config.alphad;
+	alpha_d_ = config.alpha_d;
 }
 
-void LoadBalancing::SetImageParameters(int width, int height, double overlap, double alphad) {
+void Algorithms::SetImageParameters(int width, int height, double overlap) {
 	height_ = height;
 	width_ = width;
 	overlap_ = overlap;
-	alphad_ = alphad;
 //TODO?	lp_delete_model();
 }
 
-void LoadBalancing::SetNumQuantiles(int Q) {
+void Algorithms::SetNumQuantiles(int Q) {
 	num_quantiles_ = Q;
 	quantiles_available_ = false;
 	IPx_quantile_aprox_.clear();
 }
 
-void LoadBalancing::SetTargetKeypoints(int target_num_keypoints) {
+void Algorithms::SetTargetKeypoints(int target_num_keypoints) {
 	if(target_num_keypoints != Mopt_){
 		Mopt_ = target_num_keypoints;
 		fdr_ = 0;
@@ -108,8 +107,12 @@ void LoadBalancing::SetTargetKeypoints(int target_num_keypoints) {
 	}
 }
 
-void LoadBalancing::AddKeypoints(vector<KeyPoint>& kpts) {
-	//	std::cout << "LoadBalancing::AddKeypoints = " << kpts.size() << std::endl;
+double Algorithms::getAlphad(){
+	return alpha_d_;
+}
+
+void Algorithms::AddKeypoints(vector<KeyPoint>& kpts) {
+	//	std::cout << "Algorithms::AddKeypoints = " << kpts.size() << std::endl;
 
 	//Quantile approximation of the x-coordinates:
 	//Sort IP by ascending x coordinate
@@ -152,7 +155,7 @@ void LoadBalancing::AddKeypoints(vector<KeyPoint>& kpts) {
 	}
 }
 
-float LoadBalancing::GetNextDetectionThreshold() {
+float Algorithms::GetNextDetectionThreshold() {
 	if(reconstruction_method_==RECONSTRUCTION_METHOD_FORWARD){
 		//For forward estimation and last value prediction
 		if(lastM >= Mopt_){
@@ -196,14 +199,15 @@ float LoadBalancing::GetNextDetectionThreshold() {
 	}
 }
 
-void LoadBalancing::CutVectorOptimization(int num_cooperators,
+void Algorithms::CutVectorOptimization(int num_cooperators,
 		vector<double>& c, vector<double>& p) {
 	int ret;
 	num_using_nodes_=num_cooperators;
 	if(num_cooperators == 1){
 		optimal_cutvector_.resize(1);
 		optimal_cutvector_[0] = width_;
-		est_completion_time_=height_*width_*c[0] + height_*width_/pdpx[0] + Mopt_/pdip[0] + Mopt_/pe[0];
+		//T = C*hw + P(hw + alphad*Nip)
+		est_completion_time_=c[0]*height_*width_ + p[0]*(height_*width_ + alpha_d_*Mopt_);
 	}
 	else{
 		if(use_fixed_uniform_cuts_ == 1){
@@ -213,7 +217,7 @@ void LoadBalancing::CutVectorOptimization(int num_cooperators,
 			}
 			return;
 		}
-		lp_matrix_formulation(c, pdpx, pdip, pe);
+		lp_matrix_formulation(c, p);
 		lp_create_model();
 		ret = lp_solve_model();
 		lp_delete_model();
@@ -230,11 +234,11 @@ void LoadBalancing::CutVectorOptimization(int num_cooperators,
 	}
 }
 
-std::vector<int> LoadBalancing::getCutVector() {
+std::vector<int> Algorithms::getCutVector() {
 	return optimal_cutvector_;
 }
 
-void LoadBalancing::reset() {
+void Algorithms::reset() {
 	lp_delete_model();
 	lastIPscores_.clear();
 	bdr_.clear();
@@ -244,7 +248,7 @@ void LoadBalancing::reset() {
 	quantiles_available_ = false;
 }
 
-void LoadBalancing::UpdateBDR() {
+void Algorithms::UpdateBDR() {
 	static int count=1; // For the unweighted average
 
 	if(bdr_.size()==0){
@@ -269,7 +273,7 @@ void LoadBalancing::UpdateBDR() {
 	}
 }
 
-void LoadBalancing::UpdateFDR() {
+void Algorithms::UpdateFDR() {
 	static float fdr_num;
 	static float fdr_den;
 	static int count=1; // For the unweighted average;
@@ -295,18 +299,15 @@ void LoadBalancing::UpdateFDR() {
 	}
 }
 
-int LoadBalancing::lp_matrix_formulation(vector<double>& c,
-		vector<double>& p) {
+int Algorithms::lp_matrix_formulation(vector<double>& c, vector<double>& p) {
 	//Matrix formulation from the paper 'Real-time Distributed Visual Feature Extraction from Video in Sensor Networks'
 
 	REAL *C =(REAL*)calloc(num_using_nodes_,sizeof(REAL));
-	REAL *Pdpx =(REAL*)calloc(num_using_nodes_,sizeof(REAL));
-	REAL *Pdip =(REAL*)calloc(num_using_nodes_,sizeof(REAL));
-	REAL *Pe =(REAL*)calloc(num_using_nodes_,sizeof(REAL));
+	REAL *P =(REAL*)calloc(num_using_nodes_,sizeof(REAL));
 
 	for(int i=0;i<num_using_nodes_;i++){
 		C[i] = c.at(i);
-		P[i] = p.at[i];
+		P[i] = p.at(i);
 	}
 
 	if(quantiles_available_==false){
@@ -320,7 +321,7 @@ int LoadBalancing::lp_matrix_formulation(vector<double>& c,
 			if(num_using_nodes_!=nnodes) fprintf(stderr, "Cannot use more than %d nodes when the overlap is %f\nUsing %d nodes instead.\n", num_using_nodes_, overlap_, num_using_nodes_);
 	}
 */
-/*
+
 	lp_D=(REAL*)calloc(num_using_nodes_*num_using_nodes_,sizeof(REAL));
 	lp_G=(REAL*)calloc(num_using_nodes_,sizeof(REAL));
 	lp_E=(REAL*)calloc(num_using_nodes_,sizeof(REAL));
@@ -343,7 +344,6 @@ int LoadBalancing::lp_matrix_formulation(vector<double>& c,
 		}
 	}
 	
-
 	for(int m=0; m<num_using_nodes_; m++){
 		for(int n=0; n<num_using_nodes_; n++){
 			if(m==n+1){
@@ -352,15 +352,6 @@ int LoadBalancing::lp_matrix_formulation(vector<double>& c,
 				lp_D[m*num_using_nodes_+n] += height_*width_*(C[n]-C[n+1]);
 			}
 		}
-	}
-
-	//Toverlap:
-	if(multicast_enabled_ == MULTICAST_ENABLED){
-		lp_G[0] += 2*height_*width_*overlap_*lp_CM[0];
-		for(int n=1; n<num_using_nodes_-1; n++){
-			lp_G[n] += 2*height_*width_*overlap_*(lp_CM[n-1]+lp_CM[n]);
-		}
-		lp_G[num_using_nodes_-1] += 2*height_*width_*overlap_*lp_CM[num_using_nodes_-2];
 	}
 
 	//Ttransmit (non-overlapping):
@@ -373,36 +364,30 @@ int LoadBalancing::lp_matrix_formulation(vector<double>& c,
 			}
 		}
 	}
-	if(multicast_enabled_ == MULTICAST_ENABLED){
-		lp_G[0] += -height_*width_*overlap_*C[0];
-		for(int n=1; n<num_using_nodes_-1; n++){
-			lp_G[n] += -2*height_*width_*overlap_*C[n];
-		}
-		lp_G[num_using_nodes_-1] += -height_*width_*overlap_*C[num_using_nodes_-1];
-	}
-	else{ //MULTICAST_DISABLED
-		lp_G[0] += height_*width_*overlap_*C[0];
-		for(int n=1; n<num_using_nodes_-1; n++){
-			lp_G[n] += 2*height_*width_*overlap_*C[n];
-		}
-		lp_G[num_using_nodes_-1] += height_*width_*overlap_*C[num_using_nodes_-1];
-	}
 
-	//Tdetect (as function of the area):
+	lp_G[0] += height_*width_*overlap_*C[0];
+	for(int n=1; n<num_using_nodes_-1; n++){
+		lp_G[n] += 2*height_*width_*overlap_*C[n];
+	}
+	lp_G[num_using_nodes_-1] += height_*width_*overlap_*C[num_using_nodes_-1];
+	
+
+	//Tdetect (as function of the area): P = 1/Pdpx
 	for(int n=0; n<num_using_nodes_; n++){
 		for(int m=0; m<num_using_nodes_; m++){
 			if(n==m){
-				lp_D[m*num_using_nodes_+n] += height_*width_/Pdpx[n];
+				lp_D[m*num_using_nodes_+n] += P[n]*height_*width_;
 			}
 			else if(m==n+1){
-				lp_D[m*num_using_nodes_+n] += -height_*width_/Pdpx[n+1];
+				lp_D[m*num_using_nodes_+n] += -P[n+1]*height_*width_;
 			}
 		}
 	}
 
 	//E : Tdetect (as function of the number of interest points) + Textract (as function of the number of interest points):
+		//P*alpha_d = 1/Pdip + 1/Pe
 	for(int n=0; n<num_using_nodes_; n++){
-		lp_E[n] += 1/Pdip[n] + 1/Pe[n];
+		lp_E[n] += P[n]*alpha_d_;
 	}
 
 	free(lp_CM);
@@ -411,7 +396,7 @@ int LoadBalancing::lp_matrix_formulation(vector<double>& c,
 	free(P);
 }
 
-void LoadBalancing::lp_create_model() {
+void Algorithms::lp_create_model() {
 	int Ncol=3*num_using_nodes_+(num_using_nodes_-1)*(num_quantiles_+2);	//Ncol inicial
 	int i,j;
 	int *colno=(int*)malloc((Ncol+1)*sizeof(int)); // must be 1 more then number of columns ! //
@@ -544,14 +529,14 @@ void LoadBalancing::lp_create_model() {
 	is_lpmodel_created_=true;
 }
 
-void LoadBalancing::set_uniform_quantiles() {
+void Algorithms::set_uniform_quantiles() {
 	IPx_quantile_aprox_.resize(num_quantiles_);
 	for(int i=0; i<num_quantiles_; i++){
 		IPx_quantile_aprox_.at(i)=width_*(i+1)/num_quantiles_;
 	}
 }
 
-int LoadBalancing::lp_solve_model() {
+int Algorithms::lp_solve_model() {
 	//Returns 0 when an optimal solution is found,
 	//returns 1 if the solution is suboptimal due to an overlap constraint, and we should use fewer nodes
 	//returns 2 when a suboptimal solution is found (solver timed out)
@@ -593,7 +578,7 @@ int LoadBalancing::lp_solve_model() {
 
 	printf("Estimated completion time: %f\n", est_completion_time_);
 */
-/*
+
 	//If the first cut is 0, that would be an indication that the cutvector we obtained is suboptimal,
 	//due to the overlap constraint.
 	//We should most likely use fewer nodes.
@@ -606,15 +591,15 @@ int LoadBalancing::lp_solve_model() {
 	return ret;
 }
 
-void LoadBalancing::setInitialDetectionThreshold(double th) {
+void Algorithms::setInitialDetectionThreshold(double th) {
 	lastThreshold_ = th;
 }
 
-float LoadBalancing::getCompletionTime() {
+float Algorithms::getCompletionTime() {
 	return est_completion_time_;
 }
 
-void LoadBalancing::lp_delete_model() {
+void Algorithms::lp_delete_model() {
 	free(lp_D); free(lp_G); free(lp_E);
 	if(is_lpmodel_created_==true) free_lp(&lp);
 	lp_D=NULL;
@@ -622,4 +607,4 @@ void LoadBalancing::lp_delete_model() {
 	lp_E=NULL;
 	is_lpmodel_created_=false;
 }
-*/
+

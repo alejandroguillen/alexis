@@ -10,7 +10,7 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include "NodeManager/NodeManager.h"
-#include "LoadBalancing.h"
+#include "Algorithms.h"
 #include "ProcessingSpeedEstimator.h"
 #include "TxSpeedEstimator.h"
 #include <boost/asio.hpp>

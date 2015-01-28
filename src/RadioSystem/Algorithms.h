@@ -1,12 +1,12 @@
 /*
- * LoadBalancing.h
+ * Algorithms.h
  *
- *  Created on: Oct 8, 2014
- *      Author: jordi
+ *  Created on: 26/jan/2015
+ *      Author: Alejandro Guillen
  */
 
-#ifndef LOADBALANCING_H_
-#define LOADBALANCING_H_
+#ifndef ALGORITHMS_H_
+#define ALGORITHMS_H_
 
 #include "LoadBalancingConfig.h"
 #include <opencv2/opencv.hpp>
@@ -28,31 +28,29 @@
 #define RECONSTRUCTION_METHOD_BACKWARD	2
 #define RECONSTRUCTION_METHOD_SCALING	3
 
-#define MULTICAST_ENABLED	1
-#define MULTICAST_DISABLED	0
-#define MULTICAST_DEFAULT	MULTICAST_DISABLED
-//#define MULTICAST_DEFAULT	MULTICAST_ENABLED
-
 #define USE_FIXED_UNIFORM_CUTS_DEFAULT	0
+
+#define ALPHA_D_DEFAULT 5
 
 using namespace std;
 using namespace cv;
 
-class LoadBalancing {
+class Algorithms {
 public:
-	LoadBalancing();
-	LoadBalancing(LoadBalancingConfig config);
+	Algorithms();
+	Algorithms(LoadBalancingConfig config);
 	void LoadNewConfig(LoadBalancingConfig config);
 	void SetImageParameters(int width, int height, double overlap);
 	void SetNumQuantiles(int Q);
 	void SetTargetKeypoints(int target_num_keypoints);
 	void AddKeypoints(vector<KeyPoint>& kpts);
 	float GetNextDetectionThreshold();
-	void CutVectorOptimization(int num_cooperators, vector<double>& c, vector<double>& pdpx, vector<double>& pdip, vector<double>& pe);
+	void CutVectorOptimization(int num_cooperators, vector<double>& c, vector<double>& p);
 	std::vector<int> getCutVector();
 	float getCompletionTime();
 	void setInitialDetectionThreshold(double th);
 	void reset();
+	double getAlphad();
 //		void UpdateNewImgParams(int h, int w, int M);
 //	void UpdateNewIPscores(const std::vector<float>* IPscores);
 //	void UpdateNodeInfo();
@@ -60,7 +58,7 @@ public:
 private:
 	void UpdateBDR();
 	void UpdateFDR();
-	int lp_matrix_formulation(vector<double>& c, vector<double>& pdpx, vector<double>& pdip, vector<double>& pe);
+	int lp_matrix_formulation(vector<double>& c, vector<double>& p);
 	void lp_create_model();
 	void set_uniform_quantiles();
 //	void lp_update_quantiles();
@@ -101,9 +99,10 @@ private:
 
 	int num_quantiles_;
 	float solver_timeout_; //seconds
-	int multicast_enabled_;
 
 	int use_fixed_uniform_cuts_;
+	
+	double alpha_d_;
 };
 
-#endif /* LOADBALANCING_H_ */
+#endif /* ALGORITHMS_H_ */

@@ -8,8 +8,8 @@
 #include "OffloadingManager.h"
 //#include <algorithm>
 
-bool bandwidthComp(cooperator i, cooperator j){
-	return (i.bandwidth > j.bandwidth);
+bool CtcoefComp(cooperator i, cooperator j){
+	return (i.Ctcoef < j.Ctcoef);
 }
 
 void OffloadingManager::addCooperator(Connection* c){
@@ -17,14 +17,17 @@ void OffloadingManager::addCooperator(Connection* c){
 	temp_coop.connection = c;
 	temp_coop.processing_speed_estimator = new ProcessingSpeedEstimator();
 	temp_coop.tx_speed_estimator = new TxSpeedEstimator();
-	temp_coop.processing_time_coef = new Coef();
+	temp_coop.processing_time_coef = new ProcessingCoef();
+	temp_coop.transmission_time_coef = new TransmissionCoef();
 	//Set initial values for the parameters:
 	temp_coop.bandwidth = 20e6;
 	temp_coop.Pdpx = 3.2e6;
 	temp_coop.Pdip = 10000;
 	temp_coop.Pe = 1000;
 	
-	temp_coop.Ptcoef = 0,2;
+	//Ptcoef*(1+alpha_d) >= S*Ctcoef
+	temp_coop.Ctcoef = 0.0000004;
+	temp_coop.Ptcoef = 0.0000002;
 	
 	//ALEXIS 09/01 COOP ID
 	int m=2;
@@ -62,34 +65,29 @@ void OffloadingManager::removeCooperator(Connection* c){
 
 Mat OffloadingManager::computeLoads(Mat& image){
 	vector<double> c;
-	vector<double> pdpx;
-	vector<double> pdip;
-	vector<double> pe;
+	vector<double> p;
 
 	sortCooperators();
 	for(int i=0;i<cooperators_to_use;i++){
-		c.push_back(8*1.0/(cooperatorList[i].bandwidth)); //TODO Check bandwidth units. c should be seconds/bit //BRISK The input 8-bit grayscale image. 
-		pdpx.push_back(cooperatorList[i].Pdpx);
-		pdip.push_back(cooperatorList[i].Pdip);
-		pe.push_back(cooperatorList[i].Pe);
+		c.push_back(cooperatorList[i].Ctcoef);
+		p.push_back(cooperatorList[i].Ptcoef);
+
 	}
 
 	//double overlap = OVERLAP;
 	double overlap = (double)168.0/(2*image.cols); 
-	//set alphad in configuration file
-	double alphad = 5; //REALLY????
-	loadbalancing.SetImageParameters(image.cols, image.rows, overlap);
+	algorithms.SetImageParameters(image.cols, image.rows, overlap);
 	//Solve:
 	double lpsolveTime = getTickCount();
-	loadbalancing.CutVectorOptimization(cooperators_to_use, c, pdpx, pdip, pe);
+	algorithms.CutVectorOptimization(cooperators_to_use, c, p);
 	lpsolveTime = (getTickCount()-lpsolveTime)/getTickFrequency();
 	std::cerr << "lpsolveTime = " << lpsolveTime << "sec\n";
-	vector<int> cutvector = loadbalancing.getCutVector();
+	vector<int> cutvector = algorithms.getCutVector();
 
 	for(size_t j=0; j<cutvector.size(); j++){
 		std::cerr << "cutvector: " << cutvector[j] << std::endl;
 	}
-	std::cerr << "Estimated completion time: " << loadbalancing.getCompletionTime() << "sec\n";
+	std::cerr << "Estimated completion time: " << algorithms.getCompletionTime() << "sec\n";
 
 	//Set loads in cooperatorList
 	int s1, s2;
@@ -134,7 +132,7 @@ void OffloadingManager::transmitStartDATC(StartDATCMsg* msg){
 	if(next_detection_threshold==0){
 		//First frame, use INITIAL_DETECTION_THRESHOLD
 		next_detection_threshold = INITIAL_DETECTION_THRESHOLD;
-		loadbalancing.setInitialDetectionThreshold(INITIAL_DETECTION_THRESHOLD);
+		algorithms.setInitialDetectionThreshold(INITIAL_DETECTION_THRESHOLD);
 	}
 	msg->setDetectorThreshold(next_detection_threshold);
 	msg->setMaxNumFeat((msg->getMaxNumFeat())*1.1);
@@ -214,7 +212,7 @@ void OffloadingManager::createOffloadingTask(int num_cooperators, int target_num
 	cooperators_to_use = num_cooperators;
 	features_buffer.release();
 	keypoint_buffer.clear();
-	loadbalancing.SetTargetKeypoints(target_num_keypoints);
+	algorithms.SetTargetKeypoints(target_num_keypoints);
 
 	//here we should start a timer that will check if data is received from all cooperators
 	//if it expires, it should notify the node_manager anyway to prevent deadlocks.
@@ -236,26 +234,28 @@ void OffloadingManager::estimate_parameters(cooperator* coop) {
 		if(coop->Nkeypoints > 0) coop->Pe = coop->processing_speed_estimator->getPe();
 	}
 
-	//Bandwidth
-	coop->tx_speed_estimator->AddObservation(coop->txTime, coop->Npixels);
-	coop->bandwidth = coop->tx_speed_estimator->getBandwidth();
+	//Transmission time Coef
+	coop->transmission_time_coef->AddObservation(coop->txTime, coop->Npixels);
+	coop->Ctcoef = coop->transmission_time_coef->getTransmissionTimeCoef();
 	//coop->bandwidth = 8*coop->Npixels/coop->txTime; //FIXME Only for bmp encoding, 8bits per pixel
 
 	//Processing time Coef
-	coop->processing_time_coef->AddObservation(coop->processingTime, coop->Npixels, coop->Nkeypoints);
-	coop->Ptcoef = coop->processing_time_coef->getProcessingTime();
+	coop->processing_time_coef->AddObservation(coop->processingTime, coop->Npixels, coop->Nkeypoints, algorithms.getAlphad());
+	coop->Ptcoef = coop->processing_time_coef->getProcessingTimeCoef();
 	
 	std::cerr << " Node: " << coop << std::endl;
-	std::cerr << "estimate_processing_parameters: detTime=" << coop->detTime << "\tdescTime=" << coop->descTime << "\tNpix=" << coop->Npixels << "\tNkp=" << coop->Nkeypoints << "\n";
-	std::cerr << "estimate_processing_parameters: Pdpx=" << coop->Pdpx << "\tPdip=" << coop->Pdip << "\tPe=" << coop->Pe << "\n";
-	std::cerr << "txTime: " << coop->txTime << "\testimated_bandwidth: " << coop->bandwidth << "bits/sec" << std::endl;
+	//std::cerr << "estimate_processing_parameters: detTime=" << coop->detTime << "\tdescTime=" << coop->descTime << "\tNpix=" << coop->Npixels << "\tNkp=" << coop->Nkeypoints << "\n";
+	//std::cerr << "estimate_processing_parameters: Pdpx=" << coop->Pdpx << "\tPdip=" << coop->Pdip << "\tPe=" << coop->Pe << "\n";
+	std::cerr << "estimate_processing_parameters: estimated Ptcoef= " << coop->Ptcoef << "\n";
+	std::cerr << "estimate_processing_parameters: processingTime= " << coop->processingTime << "\tNpix=" << coop->Npixels << "\tNkp=" << coop->Nkeypoints << "\n";
+	std::cerr << "txTime: " << coop->txTime << "\testimated Ctcoef: " << coop->Ctcoef << "sec/slide" << std::endl;
 	std::cerr << "cooperator completion time:" << coop->completionTime << std::endl;
-	std::cerr << "idleTime + txTime + detTime + descTime = " << coop->idleTime + coop->txTime + coop->detTime + coop->descTime  << std::endl;
+	std::cerr << "idleTime + txTime + processingTime = " << coop->idleTime + coop->txTime + coop->processingTime  << std::endl;
 }
 
 void OffloadingManager::sortCooperators()
 {
-	std::sort(cooperatorList.begin(), cooperatorList.end(), bandwidthComp);
+	std::sort(cooperatorList.begin(), cooperatorList.end(), CtcoefComp);
 }
 
 void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& features, Connection* cn,
@@ -304,9 +304,9 @@ void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& feat
 		//data received from all cooperators: stop timer
 		t.cancel();
 
-		loadbalancing.AddKeypoints(keypoint_buffer);
+		algorithms.AddKeypoints(keypoint_buffer);
 		//get next detection threshold
-		next_detection_threshold = loadbalancing.GetNextDetectionThreshold();
+		next_detection_threshold = algorithms.GetNextDetectionThreshold();
 
 std::cerr << "Next detection threshold: " << next_detection_threshold << "\n";
 std::cerr << "Added " << keypoint_buffer.size() << " keypoints\n";

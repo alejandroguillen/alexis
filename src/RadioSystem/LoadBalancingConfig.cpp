@@ -13,7 +13,7 @@
 
 LoadBalancingConfig::LoadBalancingConfig(int _reconstruction_method,
 		float _bdr_update_coef, float _fdr_update_coef, float _scaling_coef,
-		int _num_quantiles, float _solver_timeout, int _multicast_enabled) {
+		int _num_quantiles, float _solver_timeout, double _alpha_d) {
 	reconstruction_method=_reconstruction_method;
 	bdr_update_coef=_bdr_update_coef;
 	fdr_update_coef=_fdr_update_coef;
@@ -21,14 +21,14 @@ LoadBalancingConfig::LoadBalancingConfig(int _reconstruction_method,
 
 	num_quantiles=_num_quantiles;
 	solver_timeout=_solver_timeout;
-	multicast_enabled=_multicast_enabled;
 	use_fixed_uniform_cuts=0;
+	alpha_d=_alpha_d;
 }
 
 LoadBalancingConfig::LoadBalancingConfig(int _reconstruction_method,
 		float _bdr_update_coef, float _fdr_update_coef, float _scaling_coef,
-		int _num_quantiles, float _solver_timeout, int _multicast_enabled,
-		int _use_fixed_uniform_cuts) {
+		int _num_quantiles, float _solver_timeout,
+		int _use_fixed_uniform_cuts, double _alpha_d) {
 	reconstruction_method=_reconstruction_method;
 	bdr_update_coef=_bdr_update_coef;
 	fdr_update_coef=_fdr_update_coef;
@@ -36,8 +36,8 @@ LoadBalancingConfig::LoadBalancingConfig(int _reconstruction_method,
 
 	num_quantiles=_num_quantiles;
 	solver_timeout=_solver_timeout;
-	multicast_enabled=_multicast_enabled;
 	use_fixed_uniform_cuts=_use_fixed_uniform_cuts;
+	alpha_d=_alpha_d;
 }
 
 int LoadBalancingConfig::ParseConfigFile(std::string path){
@@ -80,14 +80,6 @@ int LoadBalancingConfig::ParseConfigFile(std::string path){
 		else if(strcmp(identifier.c_str(), "solver_timeout") == 0){
 			solver_timeout = atof(value.c_str());
 		}
-		else if(strcmp(identifier.c_str(), "multicast_enabled") == 0){
-			if(strcmp(value.c_str(), "true") == 0){
-				multicast_enabled = 1;
-			}
-			else{
-				multicast_enabled = 0;
-			}
-		}
 		else if(strcmp(identifier.c_str(), "use_fixed_uniform_cuts") == 0){
 			if(strcmp(value.c_str(), "true") == 0){
 				use_fixed_uniform_cuts = 1;
@@ -96,6 +88,10 @@ int LoadBalancingConfig::ParseConfigFile(std::string path){
 				use_fixed_uniform_cuts = 0;
 			}
 		}
+		else if(strcmp(identifier.c_str(), "alpha_d") == 0){
+			alpha_d = atoi(value.c_str());
+		}
+		
 	}
 	fid.close();
 	return 0;

@@ -734,7 +734,6 @@ void NodeManager::DATC_processing_thread(){
 void NodeManager::DATC_processing_thread_cooperator(int i, vector<uchar> data, Connection* c, double detection_threshold, int max_features){
 	cout << "NM: I'm entering the DATC_processing thread " << endl;
 
-	double processingTime = getTickCount();
 	
 	boost::mutex monitor;
 	boost::mutex::scoped_lock lk(monitor);
@@ -800,6 +799,8 @@ void NodeManager::DATC_processing_thread_cooperator(int i, vector<uchar> data, C
 	//int i = msg->getSource(); //ALEXIS 16/12 VECTOR
 	//i--; //ALEXIS 16/12 VECTOR only 2 spaces, so it has to be 0 (camera1) or 1 (camera2)
 	
+	double processingTime = getTickCount();
+
 	// Extract the keypoints
 	cur_task = new ExtractKeypointsTask(extractor,slice,detection_threshold);
 	taskManager_ptr->addTask(cur_task);

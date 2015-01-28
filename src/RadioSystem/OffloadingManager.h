@@ -10,12 +10,13 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include "NodeManager/NodeManager.h"
-#include "LoadBalancing.h"
+#include "Algorithms.h"
 #include "ProcessingSpeedEstimator.h"
 #include "TxSpeedEstimator.h"
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "Coef.h"
+#include "ProcessingCoef.h"
+#include "TransmissionCoef.h"
 
 using namespace std;
 using namespace cv;
@@ -53,9 +54,12 @@ typedef struct cooperator{
 	double fencTime;
 	
 	int id; //ALEXIS 09/01 COOP ID
-	Coef* processing_time_coef;
+	ProcessingCoef* processing_time_coef;
 	double Ptcoef;
 	double processingTime;
+	
+	TransmissionCoef* transmission_time_coef;
+	double Ctcoef;
 	
 }cooperator;
 
@@ -112,7 +116,7 @@ private:
 
 	double camDetTime, camDescTime, camkEncTime, camfEncTime;
 
-	LoadBalancing loadbalancing;
+	Algorithms algorithms;
 	double next_detection_threshold;
 	double start_time;
 	int next_coop;
