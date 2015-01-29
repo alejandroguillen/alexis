@@ -7,9 +7,6 @@
 
 #include "ProcessingCoef.h"
 
-#include <iostream>
-#include <fstream>
-
 ProcessingCoef::ProcessingCoef() {
 	Ptcoef = 0;
 	Pt_exp_coef_ = PT_EXP_COEF_DEFAULT;
@@ -35,18 +32,14 @@ void ProcessingCoef::AddObservation(float processingTime, int Npixels, int Nip, 
 		Ptcoef = (1-Pt_exp_coef_)*Ptcoef + Pt_exp_coef_*processingtcoeff;
 	}
 	//Ptcoef = processingtcoeff;
-	/*std::ofstream out("Ptcoef.txt");
-	std::streambuf *cerrbuf = std::cerr.rdbuf();
-	std::cerr.rdbuf(out.rdbuf());
-	std::string word;
-	std::cerr << word << " ";
-	std::cerr << Ptcoef << "\n";
-	std::cerr.rdbuf(cerrbuf);
-	out.close();
-	std::cerr << word;
-	*/
-	std::ofstream out;
-	out.open("Ptcoef.txt", std::ios::app);
-	out << Ptcoef << std::endl;
-	out.close();
+		/*std::ofstream out("Ptcoef.txt");
+		std::streambuf *cerrbuf = std::cerr.rdbuf();
+		std::cerr.rdbuf(out.rdbuf());
+		std::string word;
+		std::cerr << word << " ";
+		std::cerr << Ptcoef << "\n";
+		std::cerr.rdbuf(cerrbuf);
+		out.close();
+		std::cerr << word;
+		*/
 }

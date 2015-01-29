@@ -2,7 +2,7 @@
  * ProcessingCoef.h
  *
  *  Created on: 26/jan/2015
- *      Author: alejandro
+ *      Author: Alejandro Guillen
  */
 
 #ifndef PROCESSINGCOEF_H_

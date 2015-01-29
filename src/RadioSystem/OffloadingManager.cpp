@@ -6,7 +6,9 @@
  */
 
 #include "OffloadingManager.h"
-//#include <algorithm>
+
+#include <iostream>
+#include <fstream>
 
 bool CtcoefComp(cooperator i, cooperator j){
 	return (i.Ctcoef < j.Ctcoef);
@@ -68,10 +70,10 @@ Mat OffloadingManager::computeLoads(Mat& image){
 	vector<double> p;
 
 	sortCooperators();
+	
 	for(int i=0;i<cooperators_to_use;i++){
 		c.push_back(cooperatorList[i].Ctcoef);
 		p.push_back(cooperatorList[i].Ptcoef);
-
 	}
 
 	//double overlap = OVERLAP;
@@ -173,6 +175,7 @@ void OffloadingManager::transmitStartDATC(StartDATCMsg* msg){
 
 void OffloadingManager::transmitLoads(){
 	next_coop = 0;
+	start_time_global = getTickCount();
 	start_time = getTickCount();
 	transmitNextCoop();
 }
@@ -251,6 +254,15 @@ void OffloadingManager::estimate_parameters(cooperator* coop) {
 	std::cerr << "txTime: " << coop->txTime << "\testimated Ctcoef: " << coop->Ctcoef << "sec/slide" << std::endl;
 	std::cerr << "cooperator completion time:" << coop->completionTime << std::endl;
 	std::cerr << "idleTime + txTime + processingTime = " << coop->idleTime + coop->txTime + coop->processingTime  << std::endl;
+	
+		std::ofstream out;
+		if(coop->id == 3)
+			out.open("P3.txt", std::ios::app);
+		else
+			out.open("P4.txt", std::ios::app);	
+		out << coop->Ptcoef << " " << coop->Ctcoef << " " << coop->completionTime << " " << coop->Npixels << " " << coop->Nkeypoints << " " << coop->idleTime << std::endl;
+		out.close();
+		
 }
 
 void OffloadingManager::sortCooperators()
@@ -302,6 +314,17 @@ void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& feat
 	received_cooperators++;
 	if(received_cooperators == cooperators_to_use+1){
 		//data received from all cooperators: stop timer
+		completionTimeGlobal = (getTickCount()-start_time_global)/getTickFrequency();
+		std::cerr << "Total Completion Time: " << completionTimeGlobal << "\n";
+		
+			std::ofstream out;
+			if(node_manager->node_id == 1)
+				out.open("completionTimeGlobalC1.txt", std::ios::app);
+			else
+				out.open("completionTimeGlobalC2.txt", std::ios::app);
+			out << completionTimeGlobal << std::endl;
+			out.close();
+			
 		t.cancel();
 
 		algorithms.AddKeypoints(keypoint_buffer);

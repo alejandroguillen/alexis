@@ -38,7 +38,7 @@ Algorithms::Algorithms() {
 	
 	alpha_d_ = ALPHA_D_DEFAULT;
 
-	//Try to read config file in "Algorithms_config.txt":
+	//Try to read config file in "LoadBalancing_config.txt":
 	std::ifstream configfile(LB_CONFIG_FILE);
 	if(configfile){
 		std::cout << "Algorithms: Reading config from " <<  LB_CONFIG_FILE << std::endl;

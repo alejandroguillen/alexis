@@ -119,6 +119,8 @@ private:
 	Algorithms algorithms;
 	double next_detection_threshold;
 	double start_time;
+	double start_time_global;
+	double completionTimeGlobal;
 	int next_coop;
 
 	boost::thread r_thread;

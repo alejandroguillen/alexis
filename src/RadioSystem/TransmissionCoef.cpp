@@ -7,9 +7,6 @@
 
 #include "TransmissionCoef.h"
 
-#include <iostream> 
-#include <fstream>
-
 TransmissionCoef::TransmissionCoef() {
 	Ctcoef = 0;
 	tx_exp_coef_ = TX_EXP_COEF_DEFAULT;
@@ -34,10 +31,5 @@ void TransmissionCoef::AddObservation(float txtime, int Npixels) {
 	}else{ // Exponential smoothing
 		Ctcoef = (1-tx_exp_coef_)*Ctcoef + tx_exp_coef_*transmissiontcoeff;
 	}
-	
-	std::ofstream out;
-	out.open("Ctcoef.txt", std::ios::app);
-	out << Ctcoef << std::endl;
-	out.close();
-	
+
 }
