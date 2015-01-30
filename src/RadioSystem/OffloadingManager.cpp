@@ -236,6 +236,8 @@ void OffloadingManager::estimate_parameters(cooperator* coop) {
 		coop->Pdip = coop->processing_speed_estimator->getPdip();
 		if(coop->Nkeypoints > 0) coop->Pe = coop->processing_speed_estimator->getPe();
 	}
+	//alpha_d
+	double alpha_d = coop->processing_time_coef->getAlphad(coop->Pdpx, coop->Pdip, coop->Pe);
 
 	//Transmission time Coef
 	coop->transmission_time_coef->AddObservation(coop->txTime, coop->Npixels);
@@ -243,7 +245,7 @@ void OffloadingManager::estimate_parameters(cooperator* coop) {
 	//coop->bandwidth = 8*coop->Npixels/coop->txTime; //FIXME Only for bmp encoding, 8bits per pixel
 
 	//Processing time Coef
-	coop->processing_time_coef->AddObservation(coop->processingTime, coop->Npixels, coop->Nkeypoints, algorithms.getAlphad());
+	coop->processing_time_coef->AddObservation(coop->processingTime, coop->Npixels, coop->Nkeypoints, alpha_d);
 	coop->Ptcoef = coop->processing_time_coef->getProcessingTimeCoef();
 	
 	std::cerr << " Node: " << coop << std::endl;

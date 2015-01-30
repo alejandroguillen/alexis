@@ -23,8 +23,14 @@ float ProcessingCoef::getProcessingTimeCoef() {
 	return Ptcoef;
 }
 
+float ProcessingCoef::getAlphad(float Pdpx, float Pdip, float Pe){
+	float alpha_d; // (pixels/keypoints)
+	alpha_d = Pdpx*((1/Pdip) + (1/Pe));
+	return alpha_d;
+}
+
 void ProcessingCoef::AddObservation(float processingTime, int Npixels, int Nip, double alphad) {
-	float processingtcoeff = processingTime/(Npixels + alphad*Nip); // seconds/bits (seconds/image)
+	float processingtcoeff = processingTime/(Npixels + alphad*Nip); // seconds/pixels (seconds/image)
 	if(pt_samples <= PT_TRAINING_PERIOD){ //Training period: Arithmetic smoothing
 		pt_samples++;
 		Ptcoef = ((pt_samples-1)*Ptcoef + processingtcoeff)/pt_samples;

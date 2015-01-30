@@ -16,6 +16,7 @@ public:
 	ProcessingCoef();
 	ProcessingCoef(float Pt_exp_coef);
 	float getProcessingTimeCoef();
+	float getAlphad(float Pdpx, float Pdip, float Pe);
 	void AddObservation(float processingtime, int Npixels, int Nip, double alphad);
 private:
 	float Ptcoef;
