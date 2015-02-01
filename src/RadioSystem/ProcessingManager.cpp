@@ -134,16 +134,21 @@ void ProcessingManager::addSubSliceData(DataCTAMsg* msg){
 
 void ProcessingManager::notifyToProcess(int i){
 	
-	//first slices need 2 subslices to start processing
-	if(i==2 && cameraList.slice_id == 1){
-		start();
+	//first slice need 2 subslices to start processing
+	if(cameraList.slice_id == 1){
+		if(i==2){ 
+			start();
+		}else{
+			setData();
+		}		
 	}
 	//other slices need 3 subslices to start processing
-	else if(i==3){ 
-		start();
-	}
-	else if(i>3){ //remaining subslices
-		setData();
+	else{ 
+		if(i==3){ 
+			start();
+		}else if(i>3){  //remaining subslices
+			setData();
+		}
 	}
 }
 
@@ -161,7 +166,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
 			Mat subslice1 = imdecode(subsliceList[1].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Size sz0 = subslice0.size();
 			Size sz1 = subslice1.size();	
-			Mat slicedone(sz0.height, sz0.width+sz1.width, CV_8UC3);	
+			Mat slicedone(sz0.height, sz0.width+sz1.width, CV_LOAD_IMAGE_GRAYSCALE);	
 			Mat left(slicedone, Rect(0, 0, sz0.width, sz0.height));	
 			subslice0.copyTo(left);	
 			Mat right(slicedone, Rect(sz0.width, 0, sz1.width, sz1.height));	
@@ -170,7 +175,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
 			//imshow("slice", slicedone);
 			temp_slice.id = subslices_iteration;
 			temp_slice.col_offset = col_offset;
-
+			
 			sliceList.push_back(temp_slice);
 			return slicedone;
 
@@ -184,14 +189,14 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
 			Size sz0 = subslice0.size();
 			Size sz1 = subslice1.size();	
 			Size sz2 = subslice2.size();	
-			Mat slice_op(sz0.height, sz0.width+sz1.width, CV_8UC3);	
+			Mat slice_op(sz0.height, sz0.width+sz1.width, CV_LOAD_IMAGE_GRAYSCALE);	
 			Mat left_op(slice_op, Rect(0, 0, sz0.width, sz0.height));	
 			subslice0.copyTo(left_op);	
 			Mat right_op(slice_op, Rect(sz0.width, 0, sz1.width, sz1.height));	
 			subslice1.copyTo(right_op);
 			
 			Size sslice_op = slice_op.size();
-			Mat slicedone(sslice_op.height, sslice_op.width+sz2.width, CV_8UC3);
+			Mat slicedone(sslice_op.height, sslice_op.width+sz2.width, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat left(slicedone, Rect(0, 0, sslice_op.width, sslice_op.height));
 			subslice0.copyTo(left);	
 			Mat right(slicedone, Rect(sz2.width, 0, sz2.width, sz2.height));	
@@ -215,14 +220,14 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
 			Size sz0 = subslice0.size();
 			Size sz1 = subslice1.size();	
 			Size sz2 = subslice2.size();	
-			Mat slice_op(sz0.height, sz0.width+sz1.width, CV_8UC3);	
+			Mat slice_op(sz0.height, sz0.width+sz1.width, CV_LOAD_IMAGE_GRAYSCALE);	
 			Mat left_op(slice_op, Rect(0, 0, sz0.width, sz0.height));	
 			subslice0.copyTo(left_op);	
 			Mat right_op(slice_op, Rect(sz0.width, 0, sz1.width, sz1.height));	
 			subslice1.copyTo(right_op);
 			
 			Size sslice_op = slice_op.size();
-			Mat slicedone(sslice_op.height, sslice_op.width+sz2.width, CV_8UC3);
+			Mat slicedone(sslice_op.height, sslice_op.width+sz2.width, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat left(slicedone, Rect(0, 0, sslice_op.width, sslice_op.height));
 			subslice0.copyTo(left);	
 			Mat right(slicedone, Rect(sz2.width, 0, sz2.width, sz2.height));	
@@ -246,7 +251,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
 			Mat subslice1 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Size sz0 = subslice0.size();
 			Size sz1 = subslice1.size();	
-			Mat slicedone(sz0.height, sz0.width+sz1.width, CV_8UC3);	
+			Mat slicedone(sz0.height, sz0.width+sz1.width, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat left_op(slicedone, Rect(0, 0, sz0.width, sz0.height));	
 			subslice0.copyTo(left_op);	
 			Mat right_op(slicedone, Rect(sz0.width, 0, sz1.width, sz1.height));	
@@ -379,6 +384,5 @@ void ProcessingManager::averageParameters(){
 		detTime += sliceList[j].detTime
 		descTime += sliceList[j].descTime 
 	}
-
 }
 */

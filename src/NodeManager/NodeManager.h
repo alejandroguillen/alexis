@@ -135,6 +135,10 @@ public:
 	//bool waitcamera2;
 	//boost::mutex m_mutex2;
 	//boost::condition m_condition2;
+	
+	
+	//ALEXIS SIMULATE 01/02
+	int simulate;
 };
 
 #endif

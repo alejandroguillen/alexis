@@ -74,6 +74,7 @@ NodeManager::NodeManager(NodeType nt, string ID){
 	frame_id = -1;
 	countsubslices=0;
 	//waitcamera2=true;
+	simulate=0; //ALEXIS SIMULATE 01/02
 }
 
 NodeType NodeManager::getNodeType(){
@@ -955,6 +956,15 @@ void NodeManager::DATC_store_features(DataATCMsg* msg){
 
 void NodeManager::notifyCooperatorOnline(Connection* cn){
 	offloading_manager->addCooperator(cn);
+	//ALEXIS SIMULATE 01/02
+	simulate++;
+	if(simulate==2){
+		StartDATCMsg *datc_msg = new StartDATCMsg(0, 5, 40, 3, 512, 50, 1, 0, 1,1,1, 20,2);
+		datc_msg->setSource(0);
+		datc_msg->setDestination(1);
+		notify_msg(datc_msg);
+	}
+	/* ORIGINAL //ALEXIS SIMULATE 01/02
 	std::string ip_addr = cn->socket().remote_endpoint().address().to_string();
 	int port = cn->socket().remote_endpoint().port();
 	CoopInfoMsg *msg = new CoopInfoMsg(ip_addr,port,CoopStatus_online);
@@ -964,6 +974,7 @@ void NodeManager::notifyCooperatorOnline(Connection* cn){
 	msg->setDestination(0);
 	//
 	sendMessage(msg);
+	*/
 }
 
 void NodeManager::notifyCooperatorOffline(Connection* cn){
@@ -1084,7 +1095,6 @@ void NodeManager::Processing_slice(int processingID, int subslices_iteration, Ma
 
 	namedWindow( "Display window", WINDOW_AUTOSIZE );	// Create a window for display.
 	imshow( "Display window", slice );                   // Show our image inside it.
-
 	waitKey(0);                                          // Wait for a keystroke in the window*/
 
 	// Extract the keypoints

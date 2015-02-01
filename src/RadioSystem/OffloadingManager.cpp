@@ -75,7 +75,7 @@ Mat OffloadingManager::computeLoads(Mat& image){
 		c.push_back(cooperatorList[i].Ctcoef);
 		p.push_back(cooperatorList[i].Ptcoef);
 	}
-
+	
 	//double overlap = OVERLAP;
 	double overlap = (double)168.0/(2*image.cols); 
 	algorithms.SetImageParameters(image.cols, image.rows, overlap);
@@ -103,6 +103,7 @@ Mat OffloadingManager::computeLoads(Mat& image){
 		cooperatorList[0].image_slice = Mat(image, Range(0,image.rows), Range(s1,s2)).clone();
 		cooperatorList[0].col_offset = s1;
 		cooperatorList[0].Npixels = cooperatorList[0].image_slice.rows * cooperatorList[0].image_slice.cols;
+		
 	}
 	else{
 		//First cooperator
@@ -412,9 +413,9 @@ void OffloadingManager::transmitNextSlice(int i){
 			s2 = min(width_, (int)ceil(overlap_*width_));
 			cooperatorSlice[sub_slice_id].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
 			cooperatorSlice[sub_slice_id].col_offset = s1;
-			cooperatorSlice[sub_slice_id].Npixels = cooperatorSlice[i].image_slice.rows * cooperatorSlice[i].image_slice.cols;
+			cooperatorSlice[sub_slice_id].Npixels = cooperatorSlice[i].image_slice.rows * cooperatorSlice[i].image_slice.cols;	
 			sub_slice_id++;
-			
+
 			for(int j=1; j<sub_slices_total-1; j++){
 			//Middle subslices
 				s1 = max(0, (int)floor(j*overlap_*width_));
