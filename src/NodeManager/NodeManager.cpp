@@ -72,6 +72,7 @@ NodeManager::NodeManager(NodeType nt, string ID){
 	received_notifications = 0;
 	outgoing_msg_seq_num = 255;
 	frame_id = -1;
+	countsubslices=0;
 	//waitcamera2=true;
 }
 
@@ -257,10 +258,15 @@ void NodeManager::notify_msg(Message *msg){
 				}
 				Connection* cn = *it;
 				
-				processing_manager[pos_camera]->addCameraData(&datc_param_camera[pos_camera],(DataCTAMsg*)msg,cn);
-				
-				processing_manager[pos_camera]->start();
-				//boost::thread p_thread(&ProcessingManager::Processing_thread_cooperator, processing_manager, pos_camera);
+				if(countsubslices==0){
+					processing_manager[pos_camera]->addCameraData(&datc_param_camera[pos_camera],(DataCTAMsg*)msg,cn);
+				}
+				countsubslices++;
+				processing_manager[pos_camera]->addSubSliceData((DataCTAMsg*)msg);
+				//processing_manager[pos_camera]->start();
+				if(((DataCTAMsg*)msg)->getSliceNumber()==countsubslices){
+					countsubslices=0;
+				}	
 				
 			delete(msg);
 			break;
@@ -347,7 +353,6 @@ void NodeManager::notify_msg(Message *msg){
 
 /*void NodeManager::AddDATC(camera* cameraList){
 
-	
 	/*
 	if(msg->getDestination()==1){
 	waitcamera2 = true;
@@ -366,10 +371,8 @@ void NodeManager::notify_msg(Message *msg){
 		waitcamera2 = false;
 		m_condition2.notify_one();
 	}
-	*/
-
-
-//}
+}
+*/
 
 
 int NodeManager::notify_endTask(){
@@ -731,6 +734,8 @@ void NodeManager::DATC_processing_thread(){
 	offloading_manager->addKeypointsAndFeatures(kpts,features,null,detTime,descTime,0,0);
 }
 
+
+
 void NodeManager::DATC_processing_thread_cooperator(int i, vector<uchar> data, Connection* c, double detection_threshold, int max_features){
 	cout << "NM: I'm entering the DATC_processing thread " << endl;
 
@@ -1066,3 +1071,134 @@ void NodeManager::AddCameraMessage(int cameraid){
 	sendMessage(msg);
 }
 //
+
+void NodeManager::Processing_slice(int processingID, int subslices_iteration, Mat& slice, double detection_threshold, int max_features){
+	cout << "NM: I'm entering the DATC_processing thread " << endl;
+
+	
+	boost::mutex monitor;
+	boost::mutex::scoped_lock lk(monitor);
+	Task *cur_task;
+	
+	//cv::Mat slice;
+
+	namedWindow( "Display window", WINDOW_AUTOSIZE );	// Create a window for display.
+	imshow( "Display window", slice );                   // Show our image inside it.
+
+	waitKey(0);                                          // Wait for a keystroke in the window*/
+
+	// Extract the keypoints
+	cur_task = new ExtractKeypointsTask(extractor,slice,detection_threshold);
+	taskManager_ptr->addTask(cur_task);
+	cout << "NM: Waiting the end of the extract_keypoints_task" << endl;
+	while(!cur_task->completed){
+		cur_task_finished.wait(lk);
+	}
+	cout << "NM: ended extract_keypoints_task" << endl;
+	vector<KeyPoint> kpts = ((ExtractKeypointsTask*)cur_task)->getKeypoints();
+	double detTime = ((ExtractKeypointsTask*)cur_task)->getDetTime();
+	cout << "extracted " << (int)kpts.size() << "keypoints" << endl;
+	cerr << "extracted " << (int)kpts.size() << "keypoints\tDetThreshold=" << detection_threshold << endl;
+	delete((ExtractKeypointsTask*)cur_task);
+
+	//Extract features
+	std::cout<<std::dec;
+	cur_task = new ExtractFeaturesTask(extractor,slice,kpts,max_features);
+	taskManager_ptr->addTask(cur_task);
+	cout << "NM: Waiting the end of the extract_features_task" << endl;
+	while(!cur_task->completed){
+		cur_task_finished.wait(lk);
+	}
+	cout << "NM: ended extract_features_task" << endl;
+	Mat features = ((ExtractFeaturesTask*)cur_task)->getFeatures();
+	kpts = ((ExtractFeaturesTask*)cur_task)->getKeypoints();
+	double descTime = ((ExtractFeaturesTask*)cur_task)->getDescTime();
+	cout << "now extracted " << (int)kpts.size() << " keypoints" << endl;
+	delete((ExtractFeaturesTask*)cur_task);
+
+	
+	//save keypoints and features
+	processing_manager[processingID]->storeKeypointsAndFeatures(subslices_iteration,kpts,features, detTime, descTime);
+							
+}
+
+
+void NodeManager::TransmissionFinished(int i, Connection* c){
+//send ACK_SLICE_MESSAGE
+	boost::mutex monitor;
+	boost::mutex::scoped_lock lk(monitor);
+	Task *cur_task;
+	cout << "Sending ACK_SLICE_MESSAGE" << endl;
+
+	ACKsliceMsg *ackslice_msg = new ACKsliceMsg(frame_id);
+
+	ackslice_msg->setTcpConnection(c);
+	ackslice_msg->setSource(node_id);
+	ackslice_msg->setDestination(i+1);
+	cur_task = new SendWiFiMessageTask(ackslice_msg);
+	taskManager_ptr->addTask(cur_task);
+	cout << "NM: Waiting the end of the send_wifi_message_task" << endl;
+	{
+		boost::mutex::scoped_lock lk(cur_task->task_monitor);
+		while(!cur_task->completed){
+			cur_task_finished.wait(lk);
+		}
+	}
+	cout << "NM: exiting the wifi tx thread" << endl;
+	delete((SendWiFiMessageTask*)cur_task);
+}
+
+
+void NodeManager::notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& features, double detTime, double descTime, double processingTime, Connection* c){
+
+	boost::mutex monitor;
+	boost::mutex::scoped_lock lk(monitor);
+	Task *cur_task;
+	//decode the image (should become a task)
+	cv::Mat slice;
+
+	//features serialization
+	vector<uchar> ft_bitstream;
+	vector<uchar> kp_bitstream;
+	cur_task = new EncodeFeaturesTask(encoder,"BRISK",features,0);
+	taskManager_ptr->addTask(cur_task);
+	//cout << "NM: Waiting the end of the encode_features_task" << endl;
+	while(!cur_task->completed){
+		cur_task_finished.wait(lk);
+	}
+	//cout << "NM: ended encode_features_task" << endl;
+	ft_bitstream = ((EncodeFeaturesTask*)cur_task)->getFeatsBitstream();
+	double fencTime = ((EncodeFeaturesTask*)cur_task)->getEncodingTime();
+	delete((EncodeFeaturesTask*)cur_task);
+
+	cur_task = new EncodeKeypointsTask(encoder,kpts,640,480,true,0);
+	taskManager_ptr->addTask(cur_task);
+	//cout << "NM: Waiting the end of the encode_kpts_task" << endl;
+	while(!cur_task->completed){
+		cur_task_finished.wait(lk);
+	}
+	//cout << "NM: ended encode_kpts_task" << endl;
+	kp_bitstream = ((EncodeKeypointsTask*)cur_task)->getKptsBitstream();
+	double kencTime = ((EncodeKeypointsTask*)cur_task)->getEncodingTime();
+	delete((EncodeKeypointsTask*)cur_task);
+	cout << "sending " << (int)(kpts.size()) << "keypoints" << endl;
+	cout << "and " << (int)(features.rows) << "features" << endl;
+	
+	
+	DataATCMsg *atc_msg = new DataATCMsg(frame_id, 0, 1, detTime, descTime, kencTime, processingTime, 0, features.rows, kpts.size(), ft_bitstream, kp_bitstream);
+
+	atc_msg->setTcpConnection(c);
+	atc_msg->setSource(node_id);
+	atc_msg->setDestination(i+1);
+	cur_task = new SendWiFiMessageTask(atc_msg);
+	taskManager_ptr->addTask(cur_task);
+	cout << "NM: Waiting the end of the send_wifi_message_task" << endl;
+	{
+		boost::mutex::scoped_lock lk(cur_task->task_monitor);
+		while(!cur_task->completed){
+			cur_task_finished.wait(lk);
+		}
+	}
+	cout << "NM: exiting the wifi tx thread" << endl;
+	delete((SendWiFiMessageTask*)cur_task);
+}

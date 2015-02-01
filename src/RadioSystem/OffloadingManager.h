@@ -100,6 +100,7 @@ public:
 	void runThread();
 	int getNumAvailableCoop();
 	void transmitNextCoop();
+	void transmitNextSlice(int i);
 	void notifyACKslice(int frameID, Connection* cn);
 	//void printKeypoints(vector<KeyPoint>& kpts); //Debug
 
@@ -108,6 +109,7 @@ private:
 	int cooperators_to_use;
 	int received_cooperators;
 	vector<cooperator> cooperatorList;
+	//cooperator cooperatorSlice;
 
 	NodeManager* node_manager;
 	//used to store keypoints and features from cooperators
@@ -132,6 +134,10 @@ private:
 	boost::mutex mut;
 	
 	std::set<int> id; //ALEXIS 09/01 COOP ID
+	
+	int width_;
+	int height_;
+	double overlap_;
 
 };
 

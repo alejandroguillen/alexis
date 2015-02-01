@@ -460,4 +460,3 @@ void TransmitLoadsTask::execute(){
 	cout << "TM: task executed" << endl;
 	completed = true;
 }
-

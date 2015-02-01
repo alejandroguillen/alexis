@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <iostream>
 #include <vector>
+#include <opencv2/opencv.hpp>
+#include <highgui.h>
 #include "NodeManager/NodeManager.h"
 #include "Tasks/Tasks.h"
 #include "Messages/DataATCMsg.h"
@@ -19,6 +21,7 @@
 
 
 using namespace std;
+using namespace cv;
 
 ProcessingManager::ProcessingManager(NodeManager* nm, int i){
 	{
@@ -39,15 +42,20 @@ ProcessingManager::ProcessingManager(NodeManager* nm, int i){
 		encoder = new VisualFeatureEncoding();
 		*/
 		processcond = false;
+		processempty=true;
 		node_manager = nm;
 		//cameraList.reserve(2);
 		frame_id = -1;
 		next_detection_threshold = 0;
 		waitcamera=true;
+		
+		dataavailable=0;
+		
 		p_thread = boost::thread(&ProcessingManager::Processing_thread_cooperator, this, i);
 
 	}
 }
+
 
 void ProcessingManager::start(){
 
@@ -58,6 +66,7 @@ void ProcessingManager::start(){
 
 }
 
+
 void ProcessingManager::addCameraData(DATC_param_t* datc_param_camera, DataCTAMsg* msg, Connection* c){
 	camera temp_cam;
 
@@ -65,8 +74,33 @@ void ProcessingManager::addCameraData(DATC_param_t* datc_param_camera, DataCTAMs
 	temp_cam.id = msg->getSource();
 	temp_cam.destination = msg->getDestination();
 	//parameters
+	temp_cam.slices_total = datc_param_camera->num_cooperators;
+	temp_cam.sub_slices_total = msg->getSliceNumber();
+	temp_cam.slice_id = msg->getFrameId()+1;
 	temp_cam.detection_threshold = datc_param_camera->detection_threshold;
 	temp_cam.max_features = datc_param_camera->max_features;
+	temp_cam.detTime = 0;
+	temp_cam.descTime = 0;
+	temp_cam.kptsSize = 0;
+
+	count_subslices = 0;
+	
+	cameraList = temp_cam;
+}
+
+
+void ProcessingManager::addSubSliceData(DataCTAMsg* msg){
+	subslice temp_subslice;
+
+	count_subslices++;
+	
+	//parameters
+	temp_subslice.sub_slice_id = count_subslices;
+	//temp_subslice.slice_id = msg->getFrameId()+1;
+	//temp_subslice.sub_slices_total = msg->getSliceNumber();
+	temp_subslice.sub_slice_topleft = msg->getTopLeft();
+	//temp_subslice.detection_threshold = datc_param_camera->detection_threshold;
+	//temp_subslice.max_features = datc_param_camera->max_features;
 	//Data
 	OCTET_STRING_t oct_data = msg->getData();
 	uint8_t* imbuf = oct_data.buf;
@@ -75,36 +109,161 @@ void ProcessingManager::addCameraData(DATC_param_t* datc_param_camera, DataCTAMs
 	for(int i=0;i<data_size;i++){
 		jpeg_bitstream.push_back(imbuf[i]);
 	}
-	temp_cam.data = jpeg_bitstream;
+	temp_subslice.data = jpeg_bitstream;
 	//Set initial values for the parameters:
-	temp_cam.bandwidth = 20e6;
-	temp_cam.Pdpx = 3.2e6;
-	temp_cam.Pdip = 10000;
-	temp_cam.Pe = 1000;
+	
 	//put on the list
 
 	/*
 	auto it = cameraList.begin();
-	it=it+temp_cam.id;
+	it=it+temp_subslice.id;
 	it--;
-	cameraList.insert(it,temp_cam);
+	cameraList.insert(it,temp_subslice);
 	*/
-	//int i = temp_cam.id - 1;
-	//cameraList[i] = temp_cam;
-	cameraList = temp_cam;
+	//int i = temp_subslice.id - 1;
+	//subsliceList[i] = temp_subslice;
+	subsliceList.push_back(temp_subslice);
+	
+	//int j = subsliceList.size()-1;
+	//subsliceList[j].cond == true;
+	
+	notifyToProcess(count_subslices);
 
 }
 
-/*
-void ProcessingManager::sendWiFiMessage(int i, Message *msg){
+
+void ProcessingManager::notifyToProcess(int i){
+	
+	//first slices need 2 subslices to start processing
+	if(i==2 && cameraList.slice_id == 1){
+		start();
+	}
+	//other slices need 3 subslices to start processing
+	else if(i==3){ 
+		start();
+	}
+	else if(i>3){ //remaining subslices
+		setData();
+	}
+}
+
+
+Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
+	
+	slices temp_slice;
+	int col_offset;
+	temp_slice.last_subslices_iteration = false;
+	
+	if(cameraList.slice_id == 1){ //first slice
+		if(subslices_iteration == 1){ //merge first and second subslices
 		
-	msg->setTcpConnection(cameraList.connection);
-	msg->setSource(cameraList.destination);
-	msg->setDestination(i+1);
+			Mat subslice0 = imdecode(subsliceList[0].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat subslice1 = imdecode(subsliceList[1].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Size sz0 = subslice0.size();
+			Size sz1 = subslice1.size();	
+			Mat slicedone(sz0.height, sz0.width+sz1.width, CV_8UC3);	
+			Mat left(slicedone, Rect(0, 0, sz0.width, sz0.height));	
+			subslice0.copyTo(left);	
+			Mat right(slicedone, Rect(sz0.width, 0, sz1.width, sz1.height));	
+			subslice1.copyTo(right);	
+			col_offset = subsliceList[0].sub_slice_topleft.xCoordinate;
+			//imshow("slice", slicedone);
+			temp_slice.id = subslices_iteration;
+			temp_slice.col_offset = col_offset;
+
+			sliceList.push_back(temp_slice);
+			return slicedone;
+
+		}
+		else if(subslices_iteration<=cameraList.sub_slices_total){ //middle subslices, need three subslices
+		
+			int j=subslices_iteration;
+			Mat subslice0 = imdecode(subsliceList[j-2].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat subslice1 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat subslice2 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Size sz0 = subslice0.size();
+			Size sz1 = subslice1.size();	
+			Size sz2 = subslice2.size();	
+			Mat slice_op(sz0.height, sz0.width+sz1.width, CV_8UC3);	
+			Mat left_op(slice_op, Rect(0, 0, sz0.width, sz0.height));	
+			subslice0.copyTo(left_op);	
+			Mat right_op(slice_op, Rect(sz0.width, 0, sz1.width, sz1.height));	
+			subslice1.copyTo(right_op);
 			
-	node_manager->AddTask(msg);
+			Size sslice_op = slice_op.size();
+			Mat slicedone(sslice_op.height, sslice_op.width+sz2.width, CV_8UC3);
+			Mat left(slicedone, Rect(0, 0, sslice_op.width, sslice_op.height));
+			subslice0.copyTo(left);	
+			Mat right(slicedone, Rect(sz2.width, 0, sz2.width, sz2.height));	
+			subslice1.copyTo(right);
+			
+			col_offset = subsliceList[j-2].sub_slice_topleft.xCoordinate;
+			temp_slice.id = subslices_iteration;
+			temp_slice.col_offset = col_offset;
+
+			sliceList.push_back(temp_slice);
+			return slicedone;
+		}
+	}
+	if(cameraList.slice_id != 1 || cameraList.slices_total == 1){ //not first slice or only in slice in total (1 coop)
+		if(subslices_iteration < cameraList.sub_slices_total){ //need three subslices to merge
+		
+			int j=subslices_iteration;
+			Mat subslice0 = imdecode(subsliceList[j-2].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat subslice1 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat subslice2 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Size sz0 = subslice0.size();
+			Size sz1 = subslice1.size();	
+			Size sz2 = subslice2.size();	
+			Mat slice_op(sz0.height, sz0.width+sz1.width, CV_8UC3);	
+			Mat left_op(slice_op, Rect(0, 0, sz0.width, sz0.height));	
+			subslice0.copyTo(left_op);	
+			Mat right_op(slice_op, Rect(sz0.width, 0, sz1.width, sz1.height));	
+			subslice1.copyTo(right_op);
+			
+			Size sslice_op = slice_op.size();
+			Mat slicedone(sslice_op.height, sslice_op.width+sz2.width, CV_8UC3);
+			Mat left(slicedone, Rect(0, 0, sslice_op.width, sslice_op.height));
+			subslice0.copyTo(left);	
+			Mat right(slicedone, Rect(sz2.width, 0, sz2.width, sz2.height));	
+			subslice1.copyTo(right);
+			
+			col_offset = subsliceList[j-2].sub_slice_topleft.xCoordinate;
+
+			if(subslices_iteration == cameraList.sub_slices_total-1 && cameraList.slice_id != cameraList.slices_total){
+				temp_slice.last_subslices_iteration = true;
+			}
+			temp_slice.id = subslices_iteration;
+			temp_slice.col_offset = col_offset;
+
+			sliceList.push_back(temp_slice);
+			return slicedone;
+		}		
+		else if(cameraList.slice_id == cameraList.slices_total){	// last slice and subslice, merge second to last and last subslices
+			
+			int j=subslices_iteration;
+			Mat subslice0 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat subslice1 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Size sz0 = subslice0.size();
+			Size sz1 = subslice1.size();	
+			Mat slicedone(sz0.height, sz0.width+sz1.width, CV_8UC3);	
+			Mat left_op(slicedone, Rect(0, 0, sz0.width, sz0.height));	
+			subslice0.copyTo(left_op);	
+			Mat right_op(slicedone, Rect(sz0.width, 0, sz1.width, sz1.height));	
+			subslice1.copyTo(right_op);
+			
+			col_offset = subsliceList[j-1].sub_slice_topleft.xCoordinate;
+			
+			temp_slice.last_subslices_iteration = true;
+			temp_slice.id = subslices_iteration;
+			temp_slice.col_offset = col_offset;
+
+			sliceList.push_back(temp_slice);
+			return slicedone;
+		}
+	}
+	
 }
-*/
 
 void ProcessingManager::Processing_thread_cooperator(int i){
 while(1){
@@ -115,119 +274,111 @@ while(1){
 	}
 	cout << "PM: I'm entering the Processing thread "<< i+1 << endl;
 
-	node_manager->DATC_processing_thread_cooperator(i,cameraList.data, cameraList.connection, cameraList.detection_threshold, cameraList.max_features);
-	/*
-	cv::Mat slice;
-	slice = imdecode(cameraList.data,CV_LOAD_IMAGE_GRAYSCALE);
 
-	//send ACK_SLICE_MESSAGE
-	cout << "Sending ACK_SLICE_MESSAGE to Camera " << i + 1 << endl;
-	ACKsliceMsg *ackslice_msg = new ACKsliceMsg(frame_id);
-	sendWiFiMessage(i, ackslice_msg);
-	cout << "NM: exiting the wifi tx thread" << endl;
+	//wait until slice_condition activated
+	//boost::mutex::scoped_lock lock(subslice_mutex);
+	if(processempty==false){
+		getData();
+	}
+
+	processempty=false;
+	subslices_iteration++;
 	
-	// Extract the keypoints
-	//BRISK_detParams detPrms(60,4);
-	//BRISK_descParams dscPrms;
 	
-	//extractor = new VisualFeatureExtraction();
+	//send ACK to camera when Receiving ends
+	if(cameraList.sub_slices_total == subslices_iteration){
+		node_manager->TransmissionFinished(i, cameraList.connection);
+	}
 	
-	//extractor->setDetector("BRISK", &detPrms);
-	//extractor->setDescriptor("BRISK",&dscPrms);
+	//merge subslices to a slice
+	Mat slice_merged = mergeSubSlices(subslices_iteration);
+	
+	//start processing timer
+	processingTime = getTickCount();
+	
+	//process resulting slice and save keypoints/features
+	node_manager->Processing_slice(i,subslices_iteration, slice_merged,cameraList.detection_threshold, cameraList.max_features);
+	
+}
+}
+
+
+
+void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration,vector<KeyPoint>& kpts,Mat& features,
+		double detTime, double descTime){
+
+	//save features
+	features_buffer.push_back(features);
+	
+	//sum parameters
+	cameraList.detTime += detTime;
+	cameraList.descTime += descTime;
+	cameraList.kptsSize += kpts.size();
+	
+	//save keypoints
+	int i = subslices_iteration-1;	
+	for(int j=0;j<kpts.size();j++){
+		kpts[j].pt.x = kpts[j].pt.x + sliceList[i].col_offset;
+		keypoint_buffer.push_back(kpts[j]);
+	}
 		
-	extractor->setDetThreshold("BRISK",cameraList.detection_threshold);
-	double detTime = getTickCount();
-	vector<KeyPoint> keypoints;
-	extractor->extractKeypoints(slice,keypoints);
-	detTime = (getTickCount()-detTime)/getTickFrequency();
+	//if last slice of Coop, do an average of the parameters and send to camera 
+	if(sliceList[i].last_subslices_iteration==true){
+		
+		//end processing timer
+		processingTime = (getTickCount()-processingTime)/getTickFrequency();
+			
+		//average estimate parameters
+		//averageParameters();
+			
+		//encode kpts/features and send DataATCmsg to Camera
+		node_manager->notifyCooperatorCompleted(cameraList.id,keypoint_buffer,features_buffer,cameraList.detTime,cameraList.descTime, processingTime, cameraList.connection);
+		
+		//clear sliceList and subsliceList
+		sliceList.clear();
+		subsliceList.clear();
+		//delete cameraList;
+		features_buffer.release();
+		keypoint_buffer.clear();
 
-	cout << "PM: ended extract_keypoints_task" << endl;
-	cout << "extracted " << (int)keypoints.size() << "keypoints" << endl;
-    cerr << "extracted " << (int)keypoints.size() << "keypoints\tDetThreshold=" << cameraList.detection_threshold << endl;
-
-	//Extract features
-	std::cout<<std::dec;
-	
-	double descTime = getTickCount();
-	cv::Mat features;
-	
-	extractor->extractFeatures(slice,keypoints,features);
-	descTime = (getTickCount()-descTime)/getTickFrequency();
-	extractor->cutFeatures(keypoints,features,cameraList.max_features);
-	
-	cout << "now extracted " << (int)keypoints.size() << " keypoints" << endl;
-
-	//features serialization
-	vector<uchar> ft_bitstream;
-	vector<uchar> kp_bitstream;
-	//encoder = new VisualFeatureEncoding();
-	int method = 0;
-	/*if(method==0)// dummy
-	{
-		double fencTime = getTickCount();
-		encoder->dummy_encodeBinaryDescriptors("BRISK",
-				features,
-				ft_bitstream);
-		fencTime = (getTickCount()-fencTime)/getTickFrequency();
+			
+		//block thread until another first slice enters
+		processcond = false;
 	}
-	else // entropy coding
-	{
-		double fencTime = getTickCount();
-		encoder->encodeBinaryDescriptors("BRISK",
-				features,
-				ft_bitstream);
-		fencTime = (getTickCount()-fencTime)/getTickFrequency();
-	}*/
-	//cout << "PM: ended encode_features_task" << endl;
-	/*
-	double fencTime = getTickCount();
-	encoder->dummy_encodeBinaryDescriptors("BRISK",
-			features,
-			ft_bitstream);
-	fencTime = (getTickCount()-fencTime)/getTickFrequency();
 
-	/*if(method==0){ // dummy
-		double kencTime = getTickCount();
-		encoder->dummy_encodeKeyPoints(keypoints,kp_bitstream);
-		kencTime = (getTickCount()-kencTime)/getTickFrequency();
-
-	}
-	else{
-		double kencTime = getTickCount();
-		encoder->encodeKeyPoints(keypoints,kp_bitstream,640,480,true);
-		kencTime = (getTickCount()-kencTime)/getTickFrequency();
-	}*//*
-	double kencTime = getTickCount();
-	encoder->dummy_encodeKeyPoints(keypoints,kp_bitstream);
-	kencTime = (getTickCount()-kencTime)/getTickFrequency();
-
-	cout << "sending " << (int)(keypoints.size()) << "keypoints" << endl;
-	cout << "and " << (int)(features.rows) << "features" << endl;
-
-	//send DataATCMsg
-	cout << "send DataATCMsg to Camera" << i + 1 << endl;
-	DataATCMsg *atc_msg = new DataATCMsg(frame_id, 0, 1, detTime, descTime, kencTime, fencTime, 0, features.rows, keypoints.size(), ft_bitstream, kp_bitstream);
-	sendWiFiMessage(i, atc_msg);
-
-	cout << "PM: exiting the wifi tx thread" << i+1 << endl;
-	delete(atc_msg);
-	*/
+	//notify whether other subslices are waiting
+	processempty=true;
 	
-	//cur_state = IDLE;
-	processcond = false;
-	//removeCamera(cameraList[i].connection); not necessary 
-}
 }
 
-void ProcessingManager::removeCamera(Connection* c){
+void ProcessingManager::setData(){
 
-	/*for(int i=0;i<cameraList.size();i++){
-		camera temp_cam = cameraList[i];
-		if(temp_cam.connection == c){
-			std::cerr << "removed Data Camera " << temp_cam.id << endl;
-			int m = temp_cam.id;
-
-			cameraList.erase(cameraList.begin()+i);
-		}
-	}*/
+	mutex.lock();
+	dataavailable++;
+	mutex.unlock();
 }
+
+void ProcessingManager::getData(){
+	
+	mutex.lock();
+	while(dataavailable==0){
+		mutex.unlock();
+		mutex.lock();
+	}
+	dataavailable--;
+	mutex.unlock();
+}
+
+/*
+void ProcessingManager::averageParameters(){
+	
+	for(int j=0;j<sliceList.size();j++){
+		
+		kptsSize += sliceList[j].kpts_size;
+		featuresSize += sliceList[j].features_size;
+		detTime += sliceList[j].detTime
+		descTime += sliceList[j].descTime 
+	}
+
+}
+*/

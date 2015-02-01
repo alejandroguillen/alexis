@@ -33,30 +33,64 @@ typedef struct camera{
 	double Pdpx;
 	double Pdip;
 	double Pe;
-	vector<uchar> data;
+	double detTime;
+	double descTime;
+	int kptsSize;
+
 	double detection_threshold;
 	int max_features;
 	int destination;
 	int id; 
+	int slice_id;
+	int slices_total;
+	int sub_slices_total;
 	
 }camera;
+
+typedef struct subslice{
+
+	vector<uchar> data;
+	int sub_slice_id;
+	int sub_slices_total;
+	Coordinate sub_slice_topleft;
+	
+}subslice;
+
+typedef struct slice{
+
+	int id; 
+	bool last_subslices_iteration;
+	int kpts_size;
+	int features_size;
+	int col_offset;
+	
+}slices;
 
 class ProcessingManager{
 public:
 	ProcessingManager(NodeManager* nm, int i);
-
+	camera cameraList;
 	void start();
 	void addCameraData(DATC_param_t* datc_param_camera, DataCTAMsg* msg, Connection* c);
-	//void sendWiFiMessage(int i, Message *msg);
+	void addSubSliceData(DataCTAMsg* msg);
 	void Processing_thread_cooperator(int i);
-	void removeCamera(Connection* c);
-			
+	void storeKeypointsAndFeatures(int subslices_iteration,vector<KeyPoint>& kpts,Mat& features, double detTime, double descTime);
+	
 private:
+	
+	void notifyToProcess(int i);
+	Mat mergeSubSlices(int subslices_iteration);
+	void getData();
+	void setData();
+
+	int count_subslices;
 
 	int frame_id;
 	double next_detection_threshold;
 	//vector<camera> cameraList;
-	camera cameraList;
+	
+	vector<subslice> subsliceList;
+	vector<slices> sliceList;
 
 	NodeManager* node_manager;
 	
@@ -64,18 +98,34 @@ private:
 	VisualFeatureEncoding *encoder;
 	VisualFeatureDecoding *decoder;
 	
+	vector<KeyPoint> keypoint_buffer;
+	Mat features_buffer;
+	
+	int subslices_iteration;
+
+	double processingTime;
+	
 	boost::thread p_thread;
 	
 	bool waitcamera;
+	bool firstsubslice;
 	boost::mutex m_mutex;
 	//boost::condition m_condition;
 	
 	//vector<bool> processcond;
 	bool processcond;
+	vector<bool> slicecond;
 	//boost::ptr_vector<boost::mutex> thread_mutex;
 	boost::mutex thread_mutex;
+	boost::mutex subslice_mutex;
 	//boost::ptr_vector<boost::condition> thread_condition;
 	boost::condition thread_condition;
+	boost::condition subslice_condition;
+	
+	boost::mutex mutex;
+	int dataavailable;
+	
+	bool processempty;
 		
 };
 

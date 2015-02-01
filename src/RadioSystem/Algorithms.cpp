@@ -607,4 +607,3 @@ void Algorithms::lp_delete_model() {
 	lp_E=NULL;
 	is_lpmodel_created_=false;
 }
-
