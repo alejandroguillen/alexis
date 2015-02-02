@@ -404,7 +404,7 @@ void OffloadingManager::transmitNextSlice(int i){
 	}
 	int sub_slice_id = 0;
 
-	int s1, s2;
+	int s1, s2, offset;
 		
 		if(i==0){ //first slice
 		
@@ -429,8 +429,9 @@ void OffloadingManager::transmitNextSlice(int i){
 		else if(i!=0){ //no first slice
 		
 			//First subslice
-			s1 = max(0,(int)floor(cooperatorList[i-1].image_slice.cols));
-			s2 = min(width_, (int)ceil(cooperatorList[i-1].image_slice.cols+overlap_*width_));
+			//offset = max(0,(int)floor(cooperatorList[i-1].image_slice.cols-2*overlap_*width_));
+			s1 = 0;
+			s2 = min(width_, (int)ceil(overlap_*width_));
 			cooperatorSlice[sub_slice_id].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
 			cooperatorSlice[sub_slice_id].col_offset = s1;
 			cooperatorSlice[sub_slice_id].Npixels = cooperatorSlice[i].image_slice.rows * cooperatorSlice[i].image_slice.cols;
@@ -438,8 +439,9 @@ void OffloadingManager::transmitNextSlice(int i){
 			
 			for(int j=1; j<sub_slices_total-1; j++){
 			//Middle subslices
-				s1 = max(0, (int)floor(cooperatorList[i-1].image_slice.cols+j*overlap_*width_));
-				s2 = min(width_, (int)ceil(cooperatorList[i-1].image_slice.cols+(j+1)*overlap_*width_));
+				//offset = max(0, (int)floor(cooperatorList[i-1].image_slice.cols+(j-2)*overlap_*width_));
+				s1 = max(0, (int)floor(j*overlap_*width_));
+				s2 = min(width_, (int)ceil((j+1)*overlap_*width_));
 				cooperatorSlice[sub_slice_id].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
 				cooperatorSlice[sub_slice_id].col_offset = s1;
 				cooperatorSlice[sub_slice_id].Npixels = cooperatorSlice[i].image_slice.rows * cooperatorSlice[i].image_slice.cols;
@@ -454,7 +456,7 @@ void OffloadingManager::transmitNextSlice(int i){
 		cooperatorSlice[sub_slice_id].Npixels = cooperatorSlice[i].image_slice.rows * cooperatorSlice[i].image_slice.cols;
 			
 	
-	for(int j=0;sub_slice_id<sub_slices_total;j++){
+	for(int j=0;j<sub_slices_total;j++){
 		
 		double enc_time = getTickCount();
 		if(COMPRESS_IMAGE == 1){
@@ -475,7 +477,7 @@ void OffloadingManager::transmitNextSlice(int i){
 		msg->setDestination(cooperatorList[i].id); //ALEXIS 09/01 COOP ID
 		cooperatorList[i].connection->writeMsg(msg);
 	}	
-	
+	cooperatorSlice.clear();
 }
 
 

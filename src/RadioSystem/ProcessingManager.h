@@ -53,6 +53,7 @@ typedef struct subslice{
 	int sub_slice_id;
 	int sub_slices_total;
 	Coordinate sub_slice_topleft;
+	bool last_subslice_received;
 	
 }subslice;
 
@@ -126,6 +127,13 @@ private:
 	int dataavailable;
 	
 	bool processempty;
+	
+	bool last_subslice_received;
+	
+	boost::mutex second_mutex;
+	boost::condition second_condition;
+	bool secondprocesscond;
+	bool secondprocess;
 		
 };
 

@@ -121,8 +121,6 @@ int main(int argc, char ** argv){
 
 	taskMng->join();
 
-	//internal_msg(num_cooperators, detec_threshold, max_features, detector_type, descriptor_type, descriptor_lenght, coding, transmit_kpts, transmit_orientation, transmit_scale, num_features_per_block)
-	//msg(msg_type,seq_num, src_addr, dest_addr, connection)
 
 	return 0;
 }

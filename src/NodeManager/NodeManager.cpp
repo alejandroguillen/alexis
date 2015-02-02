@@ -958,13 +958,8 @@ void NodeManager::notifyCooperatorOnline(Connection* cn){
 	offloading_manager->addCooperator(cn);
 	//ALEXIS SIMULATE 01/02
 	simulate++;
-	if(simulate==2){
-		StartDATCMsg *datc_msg = new StartDATCMsg(0, 5, 40, 3, 512, 50, 1, 0, 1,1,1, 20,2);
-		datc_msg->setSource(0);
-		datc_msg->setDestination(1);
-		notify_msg(datc_msg);
-	}
-	/* ORIGINAL //ALEXIS SIMULATE 01/02
+	SIMULATION(1);
+	//
 	std::string ip_addr = cn->socket().remote_endpoint().address().to_string();
 	int port = cn->socket().remote_endpoint().port();
 	CoopInfoMsg *msg = new CoopInfoMsg(ip_addr,port,CoopStatus_online);
@@ -973,8 +968,7 @@ void NodeManager::notifyCooperatorOnline(Connection* cn){
 	msg->setSource(node_id);
 	msg->setDestination(0);
 	//
-	sendMessage(msg);
-	*/
+	//sendMessage(msg);	//ALEXIS SIMULATE 01/02
 }
 
 void NodeManager::notifyCooperatorOffline(Connection* cn){
@@ -1060,13 +1054,14 @@ void NodeManager::notifyOffloadingCompleted(vector<KeyPoint>& kpts,Mat& features
 			
 			msg->setDestination(0);
 
-			sendMessage(msg);
+			//sendMessage(msg); //ALEXIS SIMULATE 01/02
 
 			cout << "first keypoint: " << sub_kpts[0].pt.x << " " << sub_kpts[0].pt.y << endl;
 
 		}
 	}
 	cur_state = IDLE;
+	SIMULATION(2); //ALEXIS SIMULATE 01/02
 }
 //ALEXIS 11/01 ADD CAMERA MESSAGE
 void NodeManager::AddCameraMessage(int cameraid){
@@ -1093,9 +1088,9 @@ void NodeManager::Processing_slice(int processingID, int subslices_iteration, Ma
 	
 	//cv::Mat slice;
 
-	namedWindow( "Display window", WINDOW_AUTOSIZE );	// Create a window for display.
-	imshow( "Display window", slice );                   // Show our image inside it.
-	waitKey(0);                                          // Wait for a keystroke in the window*/
+	//namedWindow( "Display window", WINDOW_AUTOSIZE );	// Create a window for display.
+	//imshow( "Display window", slice );                   // Show our image inside it.
+	//waitKey(0);                                          // Wait for a keystroke in the window*/
 
 	// Extract the keypoints
 	cur_task = new ExtractKeypointsTask(extractor,slice,detection_threshold);
@@ -1144,7 +1139,7 @@ void NodeManager::TransmissionFinished(int i, Connection* c){
 
 	ackslice_msg->setTcpConnection(c);
 	ackslice_msg->setSource(node_id);
-	ackslice_msg->setDestination(i+1);
+	ackslice_msg->setDestination(i);
 	cur_task = new SendWiFiMessageTask(ackslice_msg);
 	taskManager_ptr->addTask(cur_task);
 	cout << "NM: Waiting the end of the send_wifi_message_task" << endl;
@@ -1212,3 +1207,34 @@ void NodeManager::notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& f
 	cout << "NM: exiting the wifi tx thread" << endl;
 	delete((SendWiFiMessageTask*)cur_task);
 }
+	
+void NodeManager::SIMULATION(int option){	
+	
+	switch(option){
+	
+		case 1:
+		{
+			if(simulate==1){ //simulate == number of Coops to wait to start msg
+				//StartDATCMsg (FramesPerSecond, DetectorType, DetectorThreshold, DescriptorType, DescriptorLength,
+				//				 MaxFeatures, RotationInvariant, CodingChoice, TransmitKpts, TransmitScale, 
+				//				  TransmitOrientation, NumFeaPerBlock, NumCooperators)
+				StartDATCMsg *datc_msg = new StartDATCMsg(0, 5, 40, 3, 512, 50, 1, 0, 1,1,1, 20,1);
+				//msg(msg_type,seq_num, src_addr, dest_addr, connection)
+				datc_msg->setSource(0);
+				datc_msg->setDestination(node_id);
+				notify_msg(datc_msg);
+				delete(datc_msg);
+			}
+		}
+		case 2:
+		{
+			sleep(1);
+			cout << "sending another msg" << endl;
+			StartDATCMsg *datc_msg = new StartDATCMsg(0, 5, 40, 3, 512, 50, 1, 0, 1,1,1, 20,1);
+			datc_msg->setSource(0);
+			datc_msg->setDestination(node_id);
+			notify_msg(datc_msg);
+			delete(datc_msg);
+		}
+	}
+}	

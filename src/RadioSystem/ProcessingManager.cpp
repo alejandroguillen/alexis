@@ -50,6 +50,10 @@ ProcessingManager::ProcessingManager(NodeManager* nm, int i){
 		waitcamera=true;
 		
 		dataavailable=0;
+		last_subslice_received=false;
+		
+		secondprocesscond=false;
+		secondprocess=false;
 		
 		p_thread = boost::thread(&ProcessingManager::Processing_thread_cooperator, this, i);
 
@@ -86,6 +90,7 @@ void ProcessingManager::addCameraData(DATC_param_t* datc_param_camera, DataCTAMs
 	count_subslices = 0;
 	
 	cameraList = temp_cam;
+	
 }
 
 
@@ -110,6 +115,11 @@ void ProcessingManager::addSubSliceData(DataCTAMsg* msg){
 		jpeg_bitstream.push_back(imbuf[i]);
 	}
 	temp_subslice.data = jpeg_bitstream;
+	
+	temp_subslice.last_subslice_received = false;
+	if(cameraList.sub_slices_total==temp_subslice.sub_slice_id){
+		temp_subslice.last_subslice_received = true;
+	}
 	//Set initial values for the parameters:
 	
 	//put on the list
@@ -128,7 +138,7 @@ void ProcessingManager::addSubSliceData(DataCTAMsg* msg){
 	//subsliceList[j].cond == true;
 	
 	notifyToProcess(count_subslices);
-
+	cout << "PM: added subslice " << endl;
 }
 
 
@@ -138,9 +148,23 @@ void ProcessingManager::notifyToProcess(int i){
 	if(cameraList.slice_id == 1){
 		if(i==2){ 
 			start();
-		}else{
+		}else if(i>2){
 			setData();
 		}		
+	}
+	//last slice needs 3 or 2 subslices to start processing
+	else if(cameraList.slices_total == cameraList.slice_id){ //3 subslices
+		if(i==3){ //3 subslices or more
+			start();
+		}else if(i>3){  //remaining subslices
+			setData();
+		}else if(i == cameraList.sub_slices_total){ //2subslices in total only
+			start();
+		}
+		
+		if(subsliceList[i-1].last_subslice_received == true){ //last subslice needs two subslices only
+			setData();
+		}
 	}
 	//other slices need 3 subslices to start processing
 	else{ 
@@ -149,6 +173,10 @@ void ProcessingManager::notifyToProcess(int i){
 		}else if(i>3){  //remaining subslices
 			setData();
 		}
+	}
+	//send ACK to camera when Receiving all subslices
+	if(subsliceList[i-1].last_subslice_received == true){
+		node_manager->TransmissionFinished(cameraList.id, cameraList.connection);
 	}
 }
 
@@ -159,7 +187,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
 	int col_offset;
 	temp_slice.last_subslices_iteration = false;
 	
-	if(cameraList.slice_id == 1){ //first slice
+	if(cameraList.slice_id == 1 && cameraList.slices_total!=1){ //first slice
 		if(subslices_iteration == 1){ //merge first and second subslices
 		
 			Mat subslice0 = imdecode(subsliceList[0].data, CV_LOAD_IMAGE_GRAYSCALE);
@@ -206,14 +234,44 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
 			temp_slice.id = subslices_iteration;
 			temp_slice.col_offset = col_offset;
 
+			if(subslices_iteration == cameraList.sub_slices_total-1 && cameraList.slice_id != cameraList.slices_total){
+				temp_slice.last_subslices_iteration = true;
+			}
+
 			sliceList.push_back(temp_slice);
+			
+			
 			return slicedone;
 		}
 	}
-	if(cameraList.slice_id != 1 || cameraList.slices_total == 1){ //not first slice or only in slice in total (1 coop)
-		if(subslices_iteration < cameraList.sub_slices_total){ //need three subslices to merge
+	if(cameraList.slice_id != 1 || cameraList.slices_total==1){ //not first slice or only one slice in total (1 coop)
 		
+		if(cameraList.slice_id == cameraList.slices_total && subslices_iteration == cameraList.sub_slices_total-1){	// last slice and subslice, merge second to last and last subslices
+
 			int j=subslices_iteration;
+			Mat subslice0 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat subslice1 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Size sz0 = subslice0.size();
+			Size sz1 = subslice1.size();
+			Mat slicedone(sz0.height, sz0.width+sz1.width, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat left_op(slicedone, Rect(0, 0, sz0.width, sz0.height));
+			subslice0.copyTo(left_op);
+			Mat right_op(slicedone, Rect(sz0.width, 0, sz1.width, sz1.height));
+			subslice1.copyTo(right_op);
+
+			col_offset = subsliceList[j-1].sub_slice_topleft.xCoordinate;
+
+			temp_slice.last_subslices_iteration = true;
+			temp_slice.id = subslices_iteration;
+			temp_slice.col_offset = col_offset;
+
+			sliceList.push_back(temp_slice);
+			return slicedone;
+		}
+		
+		else if(subslices_iteration < cameraList.sub_slices_total){ //need three subslices to merge
+
+			int j=subslices_iteration+1;
 			Mat subslice0 = imdecode(subsliceList[j-2].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat subslice1 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat subslice2 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
@@ -235,7 +293,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
 			
 			col_offset = subsliceList[j-2].sub_slice_topleft.xCoordinate;
 
-			if(subslices_iteration == cameraList.sub_slices_total-1 && cameraList.slice_id != cameraList.slices_total){
+			if(subslices_iteration == cameraList.sub_slices_total-2 && cameraList.slice_id != cameraList.slices_total){
 				temp_slice.last_subslices_iteration = true;
 			}
 			temp_slice.id = subslices_iteration;
@@ -243,29 +301,8 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
 
 			sliceList.push_back(temp_slice);
 			return slicedone;
-		}		
-		else if(cameraList.slice_id == cameraList.slices_total){	// last slice and subslice, merge second to last and last subslices
-			
-			int j=subslices_iteration;
-			Mat subslice0 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
-			Mat subslice1 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
-			Size sz0 = subslice0.size();
-			Size sz1 = subslice1.size();	
-			Mat slicedone(sz0.height, sz0.width+sz1.width, CV_LOAD_IMAGE_GRAYSCALE);
-			Mat left_op(slicedone, Rect(0, 0, sz0.width, sz0.height));	
-			subslice0.copyTo(left_op);	
-			Mat right_op(slicedone, Rect(sz0.width, 0, sz1.width, sz1.height));	
-			subslice1.copyTo(right_op);
-			
-			col_offset = subsliceList[j-1].sub_slice_topleft.xCoordinate;
-			
-			temp_slice.last_subslices_iteration = true;
-			temp_slice.id = subslices_iteration;
-			temp_slice.col_offset = col_offset;
-
-			sliceList.push_back(temp_slice);
-			return slicedone;
 		}
+		
 	}
 	
 }
@@ -280,30 +317,21 @@ while(1){
 	cout << "PM: I'm entering the Processing thread "<< i+1 << endl;
 
 
-	//wait until slice_condition activated
-	//boost::mutex::scoped_lock lock(subslice_mutex);
-	if(processempty==false){
-		getData();
-	}
-
-	processempty=false;
 	subslices_iteration++;
-	
-	
-	//send ACK to camera when Receiving ends
-	if(cameraList.sub_slices_total == subslices_iteration){
-		node_manager->TransmissionFinished(i, cameraList.connection);
+	if(subslices_iteration!=1){
+		getData();
 	}
 	
 	//merge subslices to a slice
 	Mat slice_merged = mergeSubSlices(subslices_iteration);
 	
 	//start processing timer
-	processingTime = getTickCount();
+	if(subslices_iteration==1){
+		processingTime = getTickCount();
+	}
 	
 	//process resulting slice and save keypoints/features
 	node_manager->Processing_slice(i,subslices_iteration, slice_merged,cameraList.detection_threshold, cameraList.max_features);
-	
 }
 }
 
@@ -327,7 +355,7 @@ void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration,vector
 		keypoint_buffer.push_back(kpts[j]);
 	}
 		
-	//if last slice of Coop, do an average of the parameters and send to camera 
+	//if last slice in the Coop, do an average of the parameters and send to camera
 	if(sliceList[i].last_subslices_iteration==true){
 		
 		//end processing timer
@@ -335,25 +363,30 @@ void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration,vector
 			
 		//average estimate parameters
 		//averageParameters();
-			
-		//encode kpts/features and send DataATCmsg to Camera
-		node_manager->notifyCooperatorCompleted(cameraList.id,keypoint_buffer,features_buffer,cameraList.detTime,cameraList.descTime, processingTime, cameraList.connection);
 		
 		//clear sliceList and subsliceList
 		sliceList.clear();
 		subsliceList.clear();
 		//delete cameraList;
+
+		last_subslice_received=false;
+		dataavailable=0;
+
+		//block thread until another first slice enters
+		processcond = false;
+
+		//encode kpts/features and send DataATCmsg to Camera
+		node_manager->notifyCooperatorCompleted(cameraList.id,keypoint_buffer,features_buffer,cameraList.detTime,cameraList.descTime, processingTime, cameraList.connection);
+
 		features_buffer.release();
 		keypoint_buffer.clear();
 
-			
-		//block thread until another first slice enters
-		processcond = false;
+		cout << "PM: Coop finished" << endl;
+		
+		secondprocess = true;
+		secondprocesscond = false;
 	}
 
-	//notify whether other subslices are waiting
-	processempty=true;
-	
 }
 
 void ProcessingManager::setData(){
