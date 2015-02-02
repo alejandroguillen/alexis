@@ -137,59 +137,26 @@ void ProcessingManager::addSubSliceData(DataCTAMsg* msg){
 	//int j = subsliceList.size()-1;
 	//subsliceList[j].cond == true;
 	
-	notifyToProcess(count_subslices);
+	//notifyToProcess(count_subslices);
 	cout << "PM: added subslice " << endl;
-}
-
-
-void ProcessingManager::notifyToProcess(int i){
+	setData();
 	
-	//first slice need 2 subslices to start processing
-	if(cameraList.slice_id == 1){
-		if(i==2){ 
-			start();
-		}else if(i>2){
-			setData();
-		}		
-	}
-	//last slice needs 3 or 2 subslices to start processing
-	else if(cameraList.slices_total == cameraList.slice_id){ //3 subslices
-		if(i==3){ //3 subslices or more
-			start();
-		}else if(i>3){  //remaining subslices
-			setData();
-		}else if(i == cameraList.sub_slices_total){ //2subslices in total only
-			start();
-		}
-		
-		if(subsliceList[i-1].last_subslice_received == true){ //last subslice needs two subslices only
-			setData();
-		}
-	}
-	//other slices need 3 subslices to start processing
-	else{ 
-		if(i==3){ 
-			start();
-		}else if(i>3){  //remaining subslices
-			setData();
-		}
-	}
 	//send ACK to camera when Receiving all subslices
-	if(subsliceList[i-1].last_subslice_received == true){
+	if(subsliceList[count_subslices-1].last_subslice_received == true){
 		node_manager->TransmissionFinished(cameraList.id, cameraList.connection);
 	}
 }
 
 
-Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
+Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> subsliceList){
 	
 	slices temp_slice;
 	int col_offset;
 	temp_slice.last_subslices_iteration = false;
-	
+	int z= subsliceList.size();
 	if(cameraList.slice_id == 1 && cameraList.slices_total!=1){ //first slice
 		if(subslices_iteration == 1){ //merge first and second subslices
-		
+
 			Mat subslice0 = imdecode(subsliceList[0].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat subslice1 = imdecode(subsliceList[1].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Size sz0 = subslice0.size();
@@ -198,7 +165,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
 			Mat left(slicedone, Rect(0, 0, sz0.width, sz0.height));	
 			subslice0.copyTo(left);	
 			Mat right(slicedone, Rect(sz0.width, 0, sz1.width, sz1.height));	
-			subslice1.copyTo(right);	
+			subslice1.copyTo(right);
 			col_offset = subsliceList[0].sub_slice_topleft.xCoordinate;
 			//imshow("slice", slicedone);
 			temp_slice.id = subslices_iteration;
@@ -240,7 +207,6 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
 
 			sliceList.push_back(temp_slice);
 			
-			
 			return slicedone;
 		}
 	}
@@ -268,7 +234,29 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration){
 			sliceList.push_back(temp_slice);
 			return slicedone;
 		}
-		
+		else if (subslices_iteration==1 && cameraList.slice_id == cameraList.slices_total==1){ //one Coop only
+
+			int j=subslices_iteration;
+			Mat subslice0 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat subslice1 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Size sz0 = subslice0.size();
+			Size sz1 = subslice1.size();
+			Mat slicedone(sz0.height, sz0.width+sz1.width, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat left_op(slicedone, Rect(0, 0, sz0.width, sz0.height));
+			subslice0.copyTo(left_op);
+			Mat right_op(slicedone, Rect(sz0.width, 0, sz1.width, sz1.height));
+			subslice1.copyTo(right_op);
+
+			col_offset = subsliceList[j-1].sub_slice_topleft.xCoordinate;
+
+			temp_slice.id = subslices_iteration;
+			temp_slice.col_offset = col_offset;
+
+			sliceList.push_back(temp_slice);
+
+			return slicedone;
+
+		}
 		else if(subslices_iteration < cameraList.sub_slices_total){ //need three subslices to merge
 
 			int j=subslices_iteration+1;
@@ -316,28 +304,27 @@ while(1){
 	}
 	cout << "PM: I'm entering the Processing thread "<< i+1 << endl;
 
+	while(1){
+		subslices_iteration++;
+		getData(subslices_iteration);
 
-	subslices_iteration++;
-	if(subslices_iteration!=1){
-		getData();
+		//merge subslices to a slice
+		Mat slice_merged = mergeSubSlices(subslices_iteration,subsliceList);
+		
+		//start processing timer
+		if(subslices_iteration==1){
+			processingTime = getTickCount();
+		}
+
+		//process resulting slice and save keypoints/features
+		node_manager->Processing_slice(i,subslices_iteration, slice_merged,cameraList.detection_threshold, cameraList.max_features);
 	}
-	
-	//merge subslices to a slice
-	Mat slice_merged = mergeSubSlices(subslices_iteration);
-	
-	//start processing timer
-	if(subslices_iteration==1){
-		processingTime = getTickCount();
-	}
-	
-	//process resulting slice and save keypoints/features
-	node_manager->Processing_slice(i,subslices_iteration, slice_merged,cameraList.detection_threshold, cameraList.max_features);
 }
 }
 
 
 
-void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration,vector<KeyPoint>& kpts,Mat& features,
+void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration_,vector<KeyPoint>& kpts,Mat& features,
 		double detTime, double descTime){
 
 	//save features
@@ -349,7 +336,7 @@ void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration,vector
 	cameraList.kptsSize += kpts.size();
 	
 	//save keypoints
-	int i = subslices_iteration-1;	
+	int i = subslices_iteration_-1;	
 	for(int j=0;j<kpts.size();j++){
 		kpts[j].pt.x = kpts[j].pt.x + sliceList[i].col_offset;
 		keypoint_buffer.push_back(kpts[j]);
@@ -367,10 +354,12 @@ void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration,vector
 		//clear sliceList and subsliceList
 		sliceList.clear();
 		subsliceList.clear();
+		count_subslices=0;
 		//delete cameraList;
 
 		last_subslice_received=false;
 		dataavailable=0;
+		subslices_iteration=0;
 
 		//block thread until another first slice enters
 		processcond = false;
@@ -396,26 +385,86 @@ void ProcessingManager::setData(){
 	mutex.unlock();
 }
 
-void ProcessingManager::getData(){
+void ProcessingManager::getData(int subslices_iteration){
 	
 	mutex.lock();
 	while(dataavailable==0){
 		mutex.unlock();
 		mutex.lock();
 	}
-	dataavailable--;
+
+	//first slice need 2 subslices to start processing
+	if(cameraList.slice_id == 1){
+		if(subslices_iteration==1){
+			while(dataavailable<2){
+				mutex.unlock();
+				mutex.lock();
+			}
+			dataavailable--;
+			dataavailable--;
+		}else if(subslices_iteration>2){
+			while(dataavailable==0){
+				mutex.unlock();
+				mutex.lock();
+			}
+			dataavailable--;
+		}	
+	}
+	//last slice needs 3 or 2 subslices to start processing
+	else if(cameraList.slices_total == cameraList.slice_id){ 
+	
+		if(cameraList.sub_slices_total==2){ //2 subslices in total only
+			while(dataavailable<2){
+				mutex.unlock();
+				mutex.lock();
+			}
+			dataavailable--;
+			dataavailable--;
+		}else if(subslices_iteration==cameraList.sub_slices_total){ //2 subslices in total only
+			while(dataavailable<2){
+				mutex.unlock();
+				mutex.lock();
+			}
+			dataavailable--;
+		}else if(subslices_iteration==1){ //3 subslices or more
+			while(dataavailable<3){
+				mutex.unlock();
+				mutex.lock();
+			}
+			dataavailable--;
+			dataavailable--;
+			dataavailable--;
+			if(subslices_iteration+2==cameraList.sub_slices_total){
+				dataavailable++;
+			}
+		}else if(subslices_iteration>1){ //remaining subslices
+			while(dataavailable==0){
+				mutex.unlock();
+				mutex.lock();
+			}
+			dataavailable--;
+			if(subslices_iteration+2==cameraList.sub_slices_total){
+				dataavailable++;
+			}
+		}
+	}
+	//other slices need 3 subslices to start processing
+	else{ 
+		if(subslices_iteration==1){ //3 subslices or more
+			while(dataavailable<3){
+				mutex.unlock();
+				mutex.lock();
+			}
+			dataavailable--;
+			dataavailable--;
+			dataavailable--;
+		}else if(subslices_iteration>1){ //remaining subslices
+			while(dataavailable==0){
+				mutex.unlock();
+				mutex.lock();
+			}
+			dataavailable--;
+		}
+	}
 	mutex.unlock();
 }
-
-/*
-void ProcessingManager::averageParameters(){
-	
-	for(int j=0;j<sliceList.size();j++){
-		
-		kptsSize += sliceList[j].kpts_size;
-		featuresSize += sliceList[j].features_size;
-		detTime += sliceList[j].detTime
-		descTime += sliceList[j].descTime 
-	}
-}
-*/

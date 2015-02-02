@@ -140,6 +140,9 @@ public:
 	//ALEXIS SIMULATE 01/02
 	int simulate;
 	void SIMULATION(int option);
+	
+	
+	bool firstprocess;
 };
 
 #endif

@@ -80,8 +80,8 @@ public:
 private:
 	
 	void notifyToProcess(int i);
-	Mat mergeSubSlices(int subslices_iteration);
-	void getData();
+	Mat mergeSubSlices(int subslices_iteration, vector<subslice> subsliceList);
+	void getData(int subslices_iteration);
 	void setData();
 
 	int count_subslices;

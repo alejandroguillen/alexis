@@ -73,6 +73,7 @@ NodeManager::NodeManager(NodeType nt, string ID){
 	outgoing_msg_seq_num = 255;
 	frame_id = -1;
 	countsubslices=0;
+	firstprocess=true;
 	//waitcamera2=true;
 	simulate=0; //ALEXIS SIMULATE 01/02
 }
@@ -258,9 +259,10 @@ void NodeManager::notify_msg(Message *msg){
 				std::advance(it, pos_camera);
 				}
 				Connection* cn = *it;
-				
+				if(firstprocess) processing_manager[pos_camera]->start();
 				if(countsubslices==0){
 					processing_manager[pos_camera]->addCameraData(&datc_param_camera[pos_camera],(DataCTAMsg*)msg,cn);
+					firstprocess=false;
 				}
 				countsubslices++;
 				processing_manager[pos_camera]->addSubSliceData((DataCTAMsg*)msg);
@@ -1086,8 +1088,6 @@ void NodeManager::Processing_slice(int processingID, int subslices_iteration, Ma
 	boost::mutex::scoped_lock lk(monitor);
 	Task *cur_task;
 	
-	//cv::Mat slice;
-
 	//namedWindow( "Display window", WINDOW_AUTOSIZE );	// Create a window for display.
 	//imshow( "Display window", slice );                   // Show our image inside it.
 	//waitKey(0);                                          // Wait for a keystroke in the window*/
@@ -1214,27 +1214,25 @@ void NodeManager::SIMULATION(int option){
 	
 		case 1:
 		{
-			if(simulate==1){ //simulate == number of Coops to wait to start msg
+			if(simulate==2){ //simulate == number of Coops to wait to start msg
 				//StartDATCMsg (FramesPerSecond, DetectorType, DetectorThreshold, DescriptorType, DescriptorLength,
 				//				 MaxFeatures, RotationInvariant, CodingChoice, TransmitKpts, TransmitScale, 
 				//				  TransmitOrientation, NumFeaPerBlock, NumCooperators)
-				StartDATCMsg *datc_msg = new StartDATCMsg(0, 5, 40, 3, 512, 50, 1, 0, 1,1,1, 20,1);
+				StartDATCMsg *datc_msg = new StartDATCMsg(0, 5, 40, 3, 512, 50, 1, 0, 1,1,1, 20,2);
 				//msg(msg_type,seq_num, src_addr, dest_addr, connection)
 				datc_msg->setSource(0);
 				datc_msg->setDestination(node_id);
 				notify_msg(datc_msg);
-				delete(datc_msg);
 			}
 		}
 		case 2:
 		{
-			sleep(1);
+			sleep(2);
 			cout << "sending another msg" << endl;
-			StartDATCMsg *datc_msg = new StartDATCMsg(0, 5, 40, 3, 512, 50, 1, 0, 1,1,1, 20,1);
+			StartDATCMsg *datc_msg = new StartDATCMsg(0, 5, 40, 3, 512, 50, 1, 0, 1,1,1, 20,2);
 			datc_msg->setSource(0);
 			datc_msg->setDestination(node_id);
 			notify_msg(datc_msg);
-			delete(datc_msg);
 		}
 	}
 }	
