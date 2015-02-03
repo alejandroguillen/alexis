@@ -143,7 +143,7 @@ void OffloadingManager::transmitStartDATC(StartDATCMsg* msg){
 		algorithms.setInitialDetectionThreshold(INITIAL_DETECTION_THRESHOLD);
 	}
 	msg->setDetectorThreshold(next_detection_threshold);
-	msg->setMaxNumFeat(50*1.1);
+	msg->setMaxNumFeat(50*1.1); //ALEXIS SIMULATION 03/02
 	msg->setSource(node_manager->node_id); //ALEXIS 11/12 can be changed by node_id
 	for(int i=0;i<cooperatorList.size();i++){ //ORIGINAL
 	//for(int i=0;i<cooperators_to_use;i++){ //ALEXIS 11/12 -> to not sent multiple StartDATCMsg unnecessary. 14/12 not working correctly
@@ -267,8 +267,10 @@ void OffloadingManager::estimate_parameters(cooperator* coop) {
 		std::ofstream out;
 		if(coop->id == 3)
 			out.open("P3.txt", std::ios::app);
-		else
+		else if(coop->id == 4)
 			out.open("P4.txt", std::ios::app);	
+		else if(coop->id == 5)
+			out.open("P5.txt", std::ios::app);
 		out << coop->Ptcoef << " " << coop->Ctcoef << " " << coop->completionTime << " " << coop->Npixels << " " << coop->Nkeypoints << " " << coop->idleTime << std::endl;
 		out.close();
 		
@@ -495,6 +497,7 @@ void OffloadingManager::notifyACKslice(int frameID, Connection* cn) {
 	mut.lock();
 	for(int i=0;i<cooperatorList.size();i++){
 		if(cn == cooperatorList[i].connection){
+			cerr << "OM: TxTime ended for Coop " << cooperatorList[i].id << endl;
 			cooperatorList[i].txTime = (getTickCount()-cooperatorList[i].txTime)/getTickFrequency();
 		}
 	}

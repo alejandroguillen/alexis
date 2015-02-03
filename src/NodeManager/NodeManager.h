@@ -109,7 +109,6 @@ public:
 
 	unsigned short outgoing_msg_seq_num;
 	int frame_id;
-	int countsubslices;
 
 	RadioSystem *radioSystem_ptr;
 	TaskManager *taskManager_ptr;
@@ -144,7 +143,9 @@ public:
 	void SIMULATION(int option);
 	
 	
-	bool firstprocess;
+	vector<bool> firstprocess;
+	vector<int> countsubslices;
+
 };
 
 #endif

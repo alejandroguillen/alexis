@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <iostream>
+#include <vector>
 #include <boost/bind.hpp>
 #include "NodeManager/NodeManager.h"
 #include "Tasks/Tasks.h"
@@ -12,6 +13,7 @@
 #include "RadioSystem/ProcessingManager.h"
 #include "NodeManager/SIMULATIONManager.h"
 
+#define NUM_COOP 2 //CHANGE number of Cooperators -------------------------------------------------------------------------------------
 using namespace std;
 
 //todo: deadline timer for keeping the system active even if the start/stop message is not received
@@ -44,6 +46,9 @@ NodeManager::NodeManager(NodeType nt, string ID){
 		break;
 	}
 	case COOPERATOR:{
+		countsubslices.reserve(2); //Change Number of Cameras
+		firstprocess.reserve(2); //Change Number of Cameras
+
 		BRISK_detParams detPrms(60,4);
 		
 		BRISK_descParams dscPrms;
@@ -52,16 +57,15 @@ NodeManager::NodeManager(NodeType nt, string ID){
 		extractor->setDescriptor("BRISK",&dscPrms);
 
 		encoder = new VisualFeatureEncoding();
-
-		//processing_manager.reserve(2);
 		
-		for(int i=0;i<2;i++){
+		for(int i=0;i<2;i++){ //Change Number of Cameras
 
 			processing_manager.push_back(new ProcessingManager(this,i));
+
+			countsubslices[i]=0;
+			firstprocess[i]=true;
 			
 		}
-		//processing_manager = new ProcessingManager(this,1);
-		//processing_manager2 = new ProcessingManager(this,2);
 
 		break;
 	}
@@ -69,12 +73,11 @@ NodeManager::NodeManager(NodeType nt, string ID){
 		break;
 	}
 	cur_state = IDLE;
-	datc_param_camera.reserve(2); //ALEXIS 14/12
+	datc_param_camera.reserve(2); //ALEXIS 14/12 //Change Number of Cameras
 	received_notifications = 0;
 	outgoing_msg_seq_num = 255;
 	frame_id = -1;
-	countsubslices=0;
-	firstprocess=true;
+
 	//waitcamera2=true;
 	simulate=0; //ALEXIS SIMULATE 01/02
 }
@@ -203,7 +206,7 @@ void NodeManager::notify_msg(Message *msg){
 			datc_param.transmit_scale = 1;
 
 			datc_param.num_feat_per_block = 20;
-			datc_param.num_cooperators = 1; //CHANGE number Coops here------------------------------------------------------------
+			datc_param.num_cooperators = NUM_COOP; //CHANGE COOP number here------------------------------------------------------------
 
 			//
 			/* ORIGINAL 
@@ -238,6 +241,23 @@ void NodeManager::notify_msg(Message *msg){
 			//ALEXIS adding vector: _camera[i]
 			cout << "NM: Start saving DATC Parameters from Camera " << msg->getSource() << endl;
 			
+			//ALEXIS SIMULATION 03/02
+			datc_param_camera[i].max_features = ((StartDATCMsg*)msg)->getMaxNumFeat();
+			datc_param_camera[i].det = 5;
+			datc_param_camera[i].detection_threshold = ((StartDATCMsg*)msg)->getDetectorThreshold();
+			datc_param_camera[i].desc = 3;
+			datc_param_camera[i].desc_length = 512;
+
+			datc_param_camera[i].coding = 0;
+			datc_param_camera[i].transmit_keypoints = 1;
+			datc_param_camera[i].transmit_orientation = 1;
+			datc_param_camera[i].transmit_scale = 1;
+
+			datc_param_camera[i].num_feat_per_block = 20;
+			datc_param_camera[i].num_cooperators = NUM_COOP; //CHANGE COOP number here------------------------------------------------------------
+			//
+			
+			/* ORIGINAL
 			datc_param_camera[i].max_features = ((StartDATCMsg*)msg)->getMaxNumFeat();
 			datc_param_camera[i].det = ((StartDATCMsg*)msg)->getDetectorType();
 			datc_param_camera[i].detection_threshold = ((StartDATCMsg*)msg)->getDetectorThreshold();
@@ -251,6 +271,7 @@ void NodeManager::notify_msg(Message *msg){
 
 			datc_param_camera[i].num_feat_per_block = ((StartDATCMsg*)msg)->getNumFeatPerBlock();
 			datc_param_camera[i].num_cooperators = ((StartDATCMsg*)msg)->getNumCooperators();
+			*/
 			cout << "NM: Saved DATC Parameters in Coop " << (msg)->getDestination() << endl; //ALEXIS 17/12 COUT
 			//
 			delete(msg);
@@ -278,16 +299,16 @@ void NodeManager::notify_msg(Message *msg){
 				std::advance(it, pos_camera);
 				}
 				Connection* cn = *it;
-				if(firstprocess) processing_manager[pos_camera]->start();
-				if(countsubslices==0){
+				if(firstprocess[pos_camera]) processing_manager[pos_camera]->start();
+				if(countsubslices[pos_camera]==0){
 					processing_manager[pos_camera]->addCameraData(&datc_param_camera[pos_camera],(DataCTAMsg*)msg,cn);
-					firstprocess=false;
+					firstprocess[pos_camera]=false;
 				}
-				countsubslices++;
+				countsubslices[pos_camera]++;
 				processing_manager[pos_camera]->addSubSliceData((DataCTAMsg*)msg);
 				//processing_manager[pos_camera]->start();
-				if(((DataCTAMsg*)msg)->getSliceNumber()==countsubslices){
-					countsubslices=0;
+				if(((DataCTAMsg*)msg)->getSliceNumber()==countsubslices[pos_camera]){
+					countsubslices[pos_camera]=0;
 				}	
 				
 			delete(msg);
@@ -984,7 +1005,7 @@ void NodeManager::notifyCooperatorOnline(Connection* cn){
 	offloading_manager->addCooperator(cn);
 	//ALEXIS SIMULATE 01/02
 	simulate++;
-	if(simulate==1){ //simulate == number of Coops to wait to start msg
+	if(simulate==NUM_COOP){ //simulate == number of Coops to wait to start msg //CHANGE COOP number here------------------------------------------------------------
 		
 		//SIMULATION(1);
 		//simulation_manager->start();
@@ -1109,7 +1130,7 @@ void NodeManager::AddCameraMessage(int cameraid){
 //
 
 void NodeManager::Processing_slice(int processingID, int subslices_iteration, Mat slices, double detection_threshold, int max_features){
-	cout << "NM: I'm entering the DATC_processing thread " << endl;
+	cout << "NM: I'm entering the ProcessingSlice thread " << endl;
 
 	
 	boost::mutex monitor;
@@ -1191,7 +1212,7 @@ void NodeManager::TransmissionFinished(int i, Connection* c){
 			cur_task_finished.wait(lk);
 		}
 	}
-	cout << "NM: exiting the wifi tx thread" << endl;
+	cout << "NM: end ACK SLICE tx msg" << endl;
 	delete((SendWiFiMessageTask*)cur_task);
 }
 
@@ -1246,7 +1267,7 @@ void NodeManager::notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& f
 			cur_task_finished.wait(lk);
 		}
 	}
-	cout << "NM: exiting the wifi tx thread" << endl;
+	cout << "NM: finish to sent DataATC msg" << endl;
 	delete((SendWiFiMessageTask*)cur_task);
 }
 	
