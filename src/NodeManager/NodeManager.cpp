@@ -10,6 +10,7 @@
 #include "Messages/AddCameraMsg.h"
 #include "RadioSystem/OffloadingManager.h"
 #include "RadioSystem/ProcessingManager.h"
+#include "NodeManager/SIMULATIONManager.h"
 
 using namespace std;
 
@@ -188,7 +189,24 @@ void NodeManager::notify_msg(Message *msg){
 		}
 		case CAMERA:
 		{
+			
+			//ALEXIS SIMULATION 03/02
+			datc_param.max_features =  50;
+			datc_param.det = 5;
+			datc_param.detection_threshold = 40;
+			datc_param.desc = 3;
+			datc_param.desc_length = 512;
 
+			datc_param.coding = 0;
+			datc_param.transmit_keypoints = 1;
+			datc_param.transmit_orientation = 1;
+			datc_param.transmit_scale = 1;
+
+			datc_param.num_feat_per_block = 20;
+			datc_param.num_cooperators = 1; //CHANGE number Coops here------------------------------------------------------------
+
+			//
+			/* ORIGINAL 
 			datc_param.max_features =  ((StartDATCMsg*)msg)->getMaxNumFeat();
 			datc_param.det = ((StartDATCMsg*)msg)->getDetectorType();
 			datc_param.detection_threshold = ((StartDATCMsg*)msg)->getDetectorThreshold();
@@ -202,6 +220,7 @@ void NodeManager::notify_msg(Message *msg){
 
 			datc_param.num_feat_per_block = ((StartDATCMsg*)msg)->getNumFeatPerBlock();
 			datc_param.num_cooperators = ((StartDATCMsg*)msg)->getNumCooperators();
+			*/
 			
 			int num_available_coop = offloading_manager->getNumAvailableCoop();
 			if(cur_state==IDLE && num_available_coop >= ((StartDATCMsg*)msg)->getNumCooperators()){
@@ -288,6 +307,9 @@ void NodeManager::notify_msg(Message *msg){
 		case CAMERA:{
 			DATC_store_features((DataATCMsg*)msg);
 			delete(msg);
+			//SIMULATION(2); //ALEXIS SIMULATE 01/02
+			//simulation_manager->start();
+			radioSystem_ptr->startTelosbMsg();
 			break;
 		}
 		}
@@ -734,7 +756,9 @@ void NodeManager::DATC_processing_thread(){
 
 	//put the unencoded features somewhere...
 	//todo: understand what to do with encoding times
-	offloading_manager->addKeypointsAndFeatures(kpts,features,null,detTime,descTime,0,0);
+
+	//ALEXIS MUTEX PROBLEM 03/02
+	//offloading_manager->addKeypointsAndFeatures(kpts,features,null,detTime,descTime,0,0);
 }
 
 
@@ -960,7 +984,12 @@ void NodeManager::notifyCooperatorOnline(Connection* cn){
 	offloading_manager->addCooperator(cn);
 	//ALEXIS SIMULATE 01/02
 	simulate++;
-	SIMULATION(1);
+	if(simulate==1){ //simulate == number of Coops to wait to start msg
+		
+		//SIMULATION(1);
+		//simulation_manager->start();
+		radioSystem_ptr->startTelosbMsg();
+	}
 	//
 	std::string ip_addr = cn->socket().remote_endpoint().address().to_string();
 	int port = cn->socket().remote_endpoint().port();
@@ -1063,7 +1092,6 @@ void NodeManager::notifyOffloadingCompleted(vector<KeyPoint>& kpts,Mat& features
 		}
 	}
 	cur_state = IDLE;
-	SIMULATION(2); //ALEXIS SIMULATE 01/02
 }
 //ALEXIS 11/01 ADD CAMERA MESSAGE
 void NodeManager::AddCameraMessage(int cameraid){
@@ -1080,13 +1108,27 @@ void NodeManager::AddCameraMessage(int cameraid){
 }
 //
 
-void NodeManager::Processing_slice(int processingID, int subslices_iteration, Mat& slice, double detection_threshold, int max_features){
+void NodeManager::Processing_slice(int processingID, int subslices_iteration, Mat slices, double detection_threshold, int max_features){
 	cout << "NM: I'm entering the DATC_processing thread " << endl;
 
 	
 	boost::mutex monitor;
 	boost::mutex::scoped_lock lk(monitor);
 	Task *cur_task;
+	
+	Mat slice = slices;
+
+	/*//Merge subslices
+	cur_task = new MergeSubSlicesTask(subslices_iteration,subsliceList);
+	taskManager_ptr->addTask(cur_task);
+	cout << "NM: Waiting the end of the merge_subslices_task" << endl;
+	while(!cur_task->completed){
+		cur_task_finished.wait(lk);
+	}
+	cout << "NM: ended merge_subslices_task" << endl;
+	Mat slice = ((MergeSubSlicesTask*)cur_task)->getMySlice();
+	delete((MergeSubSlicesTask*)cur_task);
+	*/
 	
 	//namedWindow( "Display window", WINDOW_AUTOSIZE );	// Create a window for display.
 	//imshow( "Display window", slice );                   // Show our image inside it.
@@ -1095,14 +1137,14 @@ void NodeManager::Processing_slice(int processingID, int subslices_iteration, Ma
 	// Extract the keypoints
 	cur_task = new ExtractKeypointsTask(extractor,slice,detection_threshold);
 	taskManager_ptr->addTask(cur_task);
-	cout << "NM: Waiting the end of the extract_keypoints_task" << endl;
+	cerr << "NM: Waiting the end of the extract_keypoints_task" << endl;
 	while(!cur_task->completed){
 		cur_task_finished.wait(lk);
 	}
-	cout << "NM: ended extract_keypoints_task" << endl;
+	cerr << "NM: ended extract_keypoints_task" << endl;
 	vector<KeyPoint> kpts = ((ExtractKeypointsTask*)cur_task)->getKeypoints();
 	double detTime = ((ExtractKeypointsTask*)cur_task)->getDetTime();
-	cout << "extracted " << (int)kpts.size() << "keypoints" << endl;
+	cerr << "extracted " << (int)kpts.size() << "keypoints" << endl;
 	cerr << "extracted " << (int)kpts.size() << "keypoints\tDetThreshold=" << detection_threshold << endl;
 	delete((ExtractKeypointsTask*)cur_task);
 
@@ -1110,15 +1152,15 @@ void NodeManager::Processing_slice(int processingID, int subslices_iteration, Ma
 	std::cout<<std::dec;
 	cur_task = new ExtractFeaturesTask(extractor,slice,kpts,max_features);
 	taskManager_ptr->addTask(cur_task);
-	cout << "NM: Waiting the end of the extract_features_task" << endl;
+	cerr << "NM: Waiting the end of the extract_features_task" << endl;
 	while(!cur_task->completed){
 		cur_task_finished.wait(lk);
 	}
-	cout << "NM: ended extract_features_task" << endl;
+	cerr << "NM: ended extract_features_task" << endl;
 	Mat features = ((ExtractFeaturesTask*)cur_task)->getFeatures();
 	kpts = ((ExtractFeaturesTask*)cur_task)->getKeypoints();
 	double descTime = ((ExtractFeaturesTask*)cur_task)->getDescTime();
-	cout << "now extracted " << (int)kpts.size() << " keypoints" << endl;
+	cerr << "now extracted " << (int)kpts.size() << " keypoints" << endl;
 	delete((ExtractFeaturesTask*)cur_task);
 
 	
@@ -1214,25 +1256,30 @@ void NodeManager::SIMULATION(int option){
 	
 		case 1:
 		{
-			if(simulate==2){ //simulate == number of Coops to wait to start msg
+			if(simulate==1){//simulate == number of Coops to wait to start msg
+				sleep(2);
 				//StartDATCMsg (FramesPerSecond, DetectorType, DetectorThreshold, DescriptorType, DescriptorLength,
 				//				 MaxFeatures, RotationInvariant, CodingChoice, TransmitKpts, TransmitScale, 
 				//				  TransmitOrientation, NumFeaPerBlock, NumCooperators)
-				StartDATCMsg *datc_msg = new StartDATCMsg(0, 5, 40, 3, 512, 50, 1, 0, 1,1,1, 20,2);
+				StartDATCMsg *datc_msg = new StartDATCMsg(0, 5, 40, 3, 512, 50, 1, 0, 1,1,1, 20,1);
 				//msg(msg_type,seq_num, src_addr, dest_addr, connection)
 				datc_msg->setSource(0);
 				datc_msg->setDestination(node_id);
-				notify_msg(datc_msg);
+				Task *cur_task;
+				cur_task = new SIMULATIONTask(datc_msg);
+				taskManager_ptr->addTask(cur_task);
 			}
 		}
 		case 2:
-		{
-			sleep(2);
-			cout << "sending another msg" << endl;
-			StartDATCMsg *datc_msg = new StartDATCMsg(0, 5, 40, 3, 512, 50, 1, 0, 1,1,1, 20,2);
+		{	
+			StartDATCMsg *datc_msg = new StartDATCMsg(0, 5, 40, 3, 512, 50, 1, 0, 1,1,1, 20,1);
 			datc_msg->setSource(0);
 			datc_msg->setDestination(node_id);
-			notify_msg(datc_msg);
+			//notify_msg(datc_msg);
+			Task *cur_task;
+			cur_task = new SIMULATIONTask(datc_msg);
+			taskManager_ptr->addTask(cur_task);
+			cout << "sending another DATCmsg" << endl;
 		}
 	}
 }	

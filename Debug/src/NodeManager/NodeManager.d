@@ -92,7 +92,11 @@ src/NodeManager/NodeManager.d: ../src/NodeManager/NodeManager.cpp \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingCoef.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TransmissionCoef.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingManager.h
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingManager.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/NodeManager/SIMULATIONManager.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/Algorithms.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingSpeedEstimator.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/NodeManager/NodeManager.h:
 
@@ -281,3 +285,11 @@ src/NodeManager/NodeManager.d: ../src/NodeManager/NodeManager.cpp \
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TransmissionCoef.h:
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingManager.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/NodeManager/SIMULATIONManager.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/Algorithms.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingSpeedEstimator.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h:

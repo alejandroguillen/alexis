@@ -76,7 +76,20 @@ src/example.d: ../src/example.cpp ../src/NodeManager/NodeManager.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ALWiFiRadioSystem.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/S2GInterface/S2GInterface.h \
  ../src/RadioSystem/RadioSystem.h ../src/RadioSystem/MessageParser.h \
- ../src/S2GInterface/S2GInterface.h
+ ../src/S2GInterface/S2GInterface.h \
+ ../src/NodeManager/SIMULATIONManager.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/NodeManager/NodeManager.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/Algorithms.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/LoadBalancingConfig.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_lib.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_types.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_utils.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_Hash.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_matrix.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_mipbb.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_SOS.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingSpeedEstimator.h \
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h
 
 ../src/NodeManager/NodeManager.h:
 
@@ -237,3 +250,29 @@ src/example.d: ../src/example.cpp ../src/NodeManager/NodeManager.h \
 ../src/RadioSystem/MessageParser.h:
 
 ../src/S2GInterface/S2GInterface.h:
+
+../src/NodeManager/SIMULATIONManager.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/NodeManager/NodeManager.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/Algorithms.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/LoadBalancingConfig.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_lib.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_types.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_utils.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_Hash.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_matrix.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_mipbb.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_SOS.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingSpeedEstimator.h:
+
+/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h:

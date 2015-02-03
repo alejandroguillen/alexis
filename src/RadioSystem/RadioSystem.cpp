@@ -4,6 +4,7 @@
 #include <vector> //ALEXIS 15/12 WIFI
 #include "RadioSystem/RadioSystem.h"
 #include "NodeManager/NodeManager.h"
+#include "NodeManager/SIMULATIONManager.h"
 #include "RadioSystem/WiFi/WiFiRadioSystem.h"
 #include "RadioSystem/WiFi/ALWiFiRadioSystem.h" //ALEXIS 15/12 WIFI CLASS
 
@@ -29,9 +30,10 @@ RadioSystem::RadioSystem(NodeManager* nm, MessageParser* m, string ip_address, s
 	{
 		telosbRadioSystem_ptr = new TelosbRadioSystem();
 		telosbRadioSystem_ptr->setIncomingMessageQueue(incoming_message_queue_ptr);
-
+		
 		tcp::resolver::query query(ip_address, port);
 		wifiRadioSystem_ptr = new WiFiRadioSystem(query,std::string("server"),nodeManager_ptr);
+		//simulation_manager = new SIMULATIONManager(this);
 		break;
 	}
 	case COOPERATOR:
@@ -82,6 +84,7 @@ int RadioSystem::startTelosbReceiver(string dev_name, string node_id){
 		return 0;
 	}
 	cout << "RS: Error in opening radio device" << endl;
+	telosbRadioSystem_ptr->startReceiver();
 	return -1;
 }
 
@@ -89,6 +92,11 @@ void RadioSystem::joinTelosbReceiver(){
 	telosbRadioSystem_ptr->joinReceiver();
 }
 
+//ALEXIS SIMULATION 03/02S
+
+void RadioSystem::startTelosbMsg(){
+	telosbRadioSystem_ptr->startMsg();
+}
 
 serial_source RadioSystem::getTelosb(){
 	return telosbRadioSystem_ptr->getTelosb();

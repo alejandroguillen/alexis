@@ -57,6 +57,7 @@ typedef struct subslice{
 	
 }subslice;
 
+
 typedef struct slice{
 
 	int id; 
@@ -76,7 +77,7 @@ public:
 	void addSubSliceData(DataCTAMsg* msg);
 	void Processing_thread_cooperator(int i);
 	void storeKeypointsAndFeatures(int subslices_iteration,vector<KeyPoint>& kpts,Mat& features, double detTime, double descTime);
-	
+
 private:
 	
 	void notifyToProcess(int i);

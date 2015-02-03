@@ -10,6 +10,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread/thread.hpp>
 #include "RadioSystem/OffloadingManager.h"
+#include "RadioSystem/ProcessingManager.h"
 
 void AcquireImageTask::execute(){
 	cout << "executing the acquire_image_task" << endl;
@@ -459,4 +460,30 @@ void TransmitLoadsTask::execute(){
 	boost::mutex::scoped_lock lk(task_monitor);
 	cout << "TM: task executed" << endl;
 	completed = true;
+}
+
+/*void MergeSubSlicesTask::execute(){
+	processing_mng->mergeSubSlices(subslices_iteration_,subsliceList_);
+	boost::mutex::scoped_lock lk(task_monitor);
+	cout << "TM: task executed" << endl;
+	completed = true;
+}*/
+SIMULATIONTask::~SIMULATIONTask(){
+	//delete(msg_to_send);
+}
+
+SIMULATIONTask::SIMULATIONTask(Message *msg){
+	msg_to_send = msg;
+	type = SIMULATION_TASK;
+	boost::mutex::scoped_lock lk(task_monitor);
+	completed = false;
+}
+void SIMULATIONTask::execute(){
+	
+	sleep(2);
+	NodeManager* node_mng;
+	node_mng->notify_msg(msg_to_send);
+	boost::mutex::scoped_lock lk(task_monitor);
+	completed = true;
+
 }

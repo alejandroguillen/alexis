@@ -40,7 +40,7 @@ public:
 	//int startWiFiReceiver2(); //ALEXIS 14/12 WIFI THREAD
 	//void joinWifiReceiver2(); //ALEXIS 14/12 WIFI THREAD
 
-
+	void startTelosbMsg();
 	serial_source getTelosb();
 	void notifyMsg(Message* msg);
 	std::set<Connection*> getWiFiConnections();

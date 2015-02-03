@@ -5,6 +5,7 @@
 #include "RadioSystem/RadioSystem.h"
 #include "RadioSystem/MessageParser.h"
 #include "S2GInterface/S2GInterface.h"
+#include "NodeManager/SIMULATIONManager.h"
 
 using namespace std;
 /*
@@ -33,6 +34,7 @@ int main(int argc, char ** argv){
 	TaskManager *taskMng;
 	S2GInterface *s2ginterface;
 	MessageParser *msg_parser;
+	SIMULATIONManager *simulation_manager;
 	//ConnectionManager *connMng;
 	boost::asio::io_service io_service;
 
@@ -85,9 +87,12 @@ int main(int argc, char ** argv){
 		//start a telosb receiver
 		radioSys->startTelosbReceiver(argv[2], argv[6]); //ALEXIS
 
+		//ALEXIS SIMULATE 03/02
+		//simulation_manager = new SIMULATIONManager(radioSys, nodeMng);
+		
+
 		//start the WiFi manager
 		radioSys->startWiFiReceiver();
-
 
 
 		radioSys->joinTelosbReceiver();

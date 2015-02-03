@@ -51,7 +51,7 @@ public:
 		}
 
 	int openRadio(const char *serial_device, int baud_rate, int non_blocking);
-
+	void startMsg();
 	//int sendTestPacket(int radio_dst, MessageType message_type, vector<char>& bitstream);
 	serial_source getTelosb();
 	void setIncomingMessageQueue(IncomingMessageQueue* incoming_message_queue);
@@ -72,6 +72,11 @@ private:
 	IncomingMessageQueue* incoming_message_queue_ptr;
 
 	void receiverThread();
+	
+
+	bool simulationcond;
+	boost::mutex simulation_mutex;
+	boost::condition simulation_condition;
 
 };
 

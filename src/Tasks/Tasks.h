@@ -33,9 +33,12 @@ enum taskType {ACQUIRE_IMAGE_TASK,
 	PROBE_AND_SORT_LINK_TASK,
 	COMPUTE_LOADS_TASK,
 	TRANSMIT_LOADS_TASK,
+	//MERGE_SUBSLICES_TASK,
+	SIMULATION_TASK,
 };
 
 class OffloadingManager;
+class ProcessingManager;
 
 class Task{
 
@@ -400,6 +403,26 @@ public:
 	void execute();
 };
 
+/*class MergeSubSlicesTask : public Task{
+private:
+	ProcessingManager* processing_mng;
+	Mat slice;
+	vector<subslice> subsliceList_;
+	int subslices_iteration_;
+public:
+	MergeSubSlicesTask(ProcessingManager* om, int subslices_iteration, vector<int> subsliceList){
+		processing_mng = om;
+		subslices_iteration_ = subslices_iteration;
+		subsliceList_ = subsliceList;
+		type = MERGE_SUBSLICES_TASK;
+		completed = false;
+	}
+	Mat getMySlice(){
+		return slice;
+	}
+	void execute();
+};*/
+
 /*class ConnectToCamera : public Task{
 private:
 public:
@@ -409,4 +432,13 @@ public:
 	}
 	void execute();
 };*/
+class SIMULATIONTask : public Task{
+	Message *msg_to_send;
+
+public:
+	~SIMULATIONTask();
+	SIMULATIONTask(Message *msg);
+	void execute();
+};
+
 #endif

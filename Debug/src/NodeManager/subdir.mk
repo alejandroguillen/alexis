@@ -4,13 +4,16 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/NodeManager/NodeManager.cpp 
+../src/NodeManager/NodeManager.cpp \
+../src/NodeManager/SIMULATIONManager.cpp 
 
 OBJS += \
-./src/NodeManager/NodeManager.o 
+./src/NodeManager/NodeManager.o \
+./src/NodeManager/SIMULATIONManager.o 
 
 CPP_DEPS += \
-./src/NodeManager/NodeManager.d 
+./src/NodeManager/NodeManager.d \
+./src/NodeManager/SIMULATIONManager.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

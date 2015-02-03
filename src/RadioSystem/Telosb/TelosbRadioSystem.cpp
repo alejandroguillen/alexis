@@ -42,7 +42,14 @@ int TelosbRadioSystem::openRadio(const char *serial_device, int baud_rate, int n
 		return 0;
 
 }
+void TelosbRadioSystem::startMsg(){
 
+		boost::mutex::scoped_lock locksimulation(simulation_mutex);
+		simulationcond = true;
+		//thread_condition[i].notify_one();
+		simulation_condition.notify_one();
+
+}
 
 void TelosbRadioSystem::receiverThread(){
 	int len;
@@ -50,9 +57,38 @@ void TelosbRadioSystem::receiverThread(){
 	uchar* packet = NULL;
 	char buf[1024];
 	asn_dec_rval_t rval;
+	int count;
+	bool firstprocess;
 
 	while(1){
-		packet = (uchar*)read_serial_packet(telosb, &len);
+//ALEXIS SIMULATION 03/02		
+		if(firstprocess==false){
+			boost::mutex::scoped_lock locksimulation(simulation_mutex);
+			while(simulationcond == false){
+				simulation_condition.wait(locksimulation);
+			}
+			cout << "SM: Sending STARTDATC msg " << endl;
+			simulationcond=false;
+		}
+		
+		sleep(2);
+		count++;
+		int src_addr = 0;
+		int dst_addr = node_id;
+		MessageType message_type = START_DATC_MESSAGE;
+		int seq_num = count;
+		int num_packets = 1;
+		int packet_id = 0;
+
+		int bitstream_size = 0;
+		vector<char> bitstream;
+		
+		
+		incoming_message_queue_ptr->addPacketToQueue(src_addr, dst_addr,message_type,seq_num,num_packets,packet_id,bitstream);
+//
+//ORIGINAL SIMULATION without telosB
+/*
+		packet = (uchar*)read_serial_packet(telosb, &len); 
 
 		//READ PACKET HEADER
 		//cout << "TRS: message received!" << endl; //ALEXIS
@@ -87,7 +123,7 @@ void TelosbRadioSystem::receiverThread(){
 			free(packet);
 			packet = NULL;
 		}
-
+*/
 
 //		switch(message_type){
 //		case START_CTA_MESSAGE:

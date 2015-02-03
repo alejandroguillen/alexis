@@ -138,7 +138,7 @@ void ProcessingManager::addSubSliceData(DataCTAMsg* msg){
 	//subsliceList[j].cond == true;
 	
 	//notifyToProcess(count_subslices);
-	cout << "PM: added subslice " << endl;
+	cerr << "PM: added subslice " << endl;
 	setData();
 	
 	//send ACK to camera when Receiving all subslices
@@ -154,6 +154,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 	int col_offset;
 	temp_slice.last_subslices_iteration = false;
 	int z= subsliceList.size();
+	
 	if(cameraList.slice_id == 1 && cameraList.slices_total!=1){ //first slice
 		if(subslices_iteration == 1){ //merge first and second subslices
 
@@ -257,12 +258,46 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 			return slicedone;
 
 		}
-		else if(subslices_iteration < cameraList.sub_slices_total){ //need three subslices to merge
+		else if(subslices_iteration < cameraList.sub_slices_total && cameraList.slices_total !=1){ //need three subslices to merge
 
 			int j=subslices_iteration+1;
 			Mat subslice0 = imdecode(subsliceList[j-2].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat subslice1 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat subslice2 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Size sz0 = subslice0.size();
+			Size sz1 = subslice1.size();	
+			Size sz2 = subslice2.size();	
+			Mat slice_op(sz0.height, sz0.width+sz1.width, CV_LOAD_IMAGE_GRAYSCALE);	
+			Mat left_op(slice_op, Rect(0, 0, sz0.width, sz0.height));	
+			subslice0.copyTo(left_op);	
+			Mat right_op(slice_op, Rect(sz0.width, 0, sz1.width, sz1.height));	
+			subslice1.copyTo(right_op);
+			
+			Size sslice_op = slice_op.size();
+			Mat slicedone(sslice_op.height, sslice_op.width+sz2.width, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat left(slicedone, Rect(0, 0, sslice_op.width, sslice_op.height));
+			subslice0.copyTo(left);	
+			Mat right(slicedone, Rect(sz2.width, 0, sz2.width, sz2.height));	
+			subslice1.copyTo(right);
+			
+			col_offset = subsliceList[j-2].sub_slice_topleft.xCoordinate;
+
+			if(subslices_iteration == cameraList.sub_slices_total-2 && cameraList.slice_id != cameraList.slices_total){
+				temp_slice.last_subslices_iteration = true;
+			}
+			temp_slice.id = subslices_iteration;
+			temp_slice.col_offset = col_offset;
+
+			sliceList.push_back(temp_slice);
+			return slicedone;
+		}
+		else if(subslices_iteration < cameraList.sub_slices_total && cameraList.slices_total ==1){ //need three subslices to merge
+			
+			int j=subslices_iteration+1;
+			
+			Mat subslice0 = imdecode(subsliceList[j-3].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat subslice1 = imdecode(subsliceList[j-2].data, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat subslice2 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Size sz0 = subslice0.size();
 			Size sz1 = subslice1.size();	
 			Size sz2 = subslice2.size();	
@@ -296,7 +331,6 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 }
 
 void ProcessingManager::Processing_thread_cooperator(int i){
-while(1){
 
 	boost::mutex::scoped_lock lock(thread_mutex);
 	while(processcond == false){
@@ -304,11 +338,13 @@ while(1){
 	}
 	cout << "PM: I'm entering the Processing thread "<< i+1 << endl;
 
-	while(1){
+	do{
 		subslices_iteration++;
 		getData(subslices_iteration);
 
 		//merge subslices to a slice
+		int f = subsliceList.size();
+		cerr << "available: " << f << " slices ///////////////////////////////////////////////////////////" <<endl;
 		Mat slice_merged = mergeSubSlices(subslices_iteration,subsliceList);
 		
 		//start processing timer
@@ -318,8 +354,10 @@ while(1){
 
 		//process resulting slice and save keypoints/features
 		node_manager->Processing_slice(i,subslices_iteration, slice_merged,cameraList.detection_threshold, cameraList.max_features);
+		slice_merged.release();
 	}
-}
+	while(1);
+
 }
 
 
@@ -402,7 +440,7 @@ void ProcessingManager::getData(int subslices_iteration){
 			}
 			dataavailable--;
 			dataavailable--;
-		}else if(subslices_iteration>2){
+		}else if(subslices_iteration>1){
 			while(dataavailable==0){
 				mutex.unlock();
 				mutex.lock();

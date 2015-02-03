@@ -182,6 +182,7 @@ void OffloadingManager::transmitStartDATC(StartDATCMsg* msg){
 void OffloadingManager::transmitLoads(){
 	next_coop = 0;
 	start_time_global = getTickCount();
+	cerr << "start timer: " << start_time_global << " ticks ///////////////////////////////////////////////////////////" <<endl;
 	start_time = getTickCount();
 	transmitNextCoop();
 }
@@ -320,9 +321,10 @@ void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& feat
 
 	//add
 	received_cooperators++;
-	if(received_cooperators == cooperators_to_use+1){
+	if(received_cooperators == cooperators_to_use){ //ALEXIS MUTEX PROBLEM 03/02
 		//data received from all cooperators: stop timer
 		completionTimeGlobal = (getTickCount()-start_time_global)/getTickFrequency();
+		cerr << "start timer: " << completionTimeGlobal << " ticks ///////////////////////////////////////////////////////////" <<endl;
 		std::cerr << "Total Completion Time: " << completionTimeGlobal << "\n";
 		
 			std::ofstream out;
