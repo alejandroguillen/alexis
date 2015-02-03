@@ -143,8 +143,8 @@ void OffloadingManager::transmitStartDATC(StartDATCMsg* msg){
 		algorithms.setInitialDetectionThreshold(INITIAL_DETECTION_THRESHOLD);
 	}
 	msg->setDetectorThreshold(next_detection_threshold);
-	msg->setMaxNumFeat((msg->getMaxNumFeat())*1.1);
-	msg->setSource(msg->getDestination()); //ALEXIS 11/12 can be changed by node_id
+	msg->setMaxNumFeat(50*1.1);
+	msg->setSource(node_manager->node_id); //ALEXIS 11/12 can be changed by node_id
 	for(int i=0;i<cooperatorList.size();i++){ //ORIGINAL
 	//for(int i=0;i<cooperators_to_use;i++){ //ALEXIS 11/12 -> to not sent multiple StartDATCMsg unnecessary. 14/12 not working correctly
 		//msg->setDestination(i+3); //ALEXIS 11/12
@@ -321,7 +321,7 @@ void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& feat
 
 	//add
 	received_cooperators++;
-	if(received_cooperators == cooperators_to_use){ //ALEXIS MUTEX PROBLEM 03/02
+	if(received_cooperators == cooperators_to_use+1){ //ALEXIS MUTEX PROBLEM 03/02
 		//data received from all cooperators: stop timer
 		completionTimeGlobal = (getTickCount()-start_time_global)/getTickFrequency();
 		cerr << "start timer: " << completionTimeGlobal << " ticks ///////////////////////////////////////////////////////////" <<endl;

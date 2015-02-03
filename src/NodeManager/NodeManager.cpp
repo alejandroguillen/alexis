@@ -758,7 +758,7 @@ void NodeManager::DATC_processing_thread(){
 	//todo: understand what to do with encoding times
 
 	//ALEXIS MUTEX PROBLEM 03/02
-	//offloading_manager->addKeypointsAndFeatures(kpts,features,null,detTime,descTime,0,0);
+	offloading_manager->addKeypointsAndFeatures(kpts,features,null,detTime,descTime,0,0);
 }
 
 
@@ -1236,7 +1236,7 @@ void NodeManager::notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& f
 
 	atc_msg->setTcpConnection(c);
 	atc_msg->setSource(node_id);
-	atc_msg->setDestination(i+1);
+	atc_msg->setDestination(1);
 	cur_task = new SendWiFiMessageTask(atc_msg);
 	taskManager_ptr->addTask(cur_task);
 	cout << "NM: Waiting the end of the send_wifi_message_task" << endl;

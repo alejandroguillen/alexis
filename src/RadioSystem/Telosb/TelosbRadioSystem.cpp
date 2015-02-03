@@ -71,7 +71,7 @@ void TelosbRadioSystem::receiverThread(){
 			simulationcond=false;
 		}
 		
-		sleep(2);
+		sleep(1);
 		count++;
 		int src_addr = 0;
 		int dst_addr = node_id;
