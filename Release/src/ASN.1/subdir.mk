@@ -4,6 +4,8 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../src/ASN.1/ACKsliceMessage.c \
+../src/ASN.1/AddCameraMessage.c \
 ../src/ASN.1/BIT_STRING.c \
 ../src/ASN.1/BOOLEAN.c \
 ../src/ASN.1/CodingChoices.c \
@@ -41,6 +43,8 @@ C_SRCS += \
 ../src/ASN.1/xer_support.c 
 
 OBJS += \
+./src/ASN.1/ACKsliceMessage.o \
+./src/ASN.1/AddCameraMessage.o \
 ./src/ASN.1/BIT_STRING.o \
 ./src/ASN.1/BOOLEAN.o \
 ./src/ASN.1/CodingChoices.o \
@@ -78,6 +82,8 @@ OBJS += \
 ./src/ASN.1/xer_support.o 
 
 C_DEPS += \
+./src/ASN.1/ACKsliceMessage.d \
+./src/ASN.1/AddCameraMessage.d \
 ./src/ASN.1/BIT_STRING.d \
 ./src/ASN.1/BOOLEAN.d \
 ./src/ASN.1/CodingChoices.d \

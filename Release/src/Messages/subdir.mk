@@ -4,6 +4,8 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/Messages/ACKsliceMsg.cpp \
+../src/Messages/AddCameraMsg.cpp \
 ../src/Messages/CoopInfoMsg.cpp \
 ../src/Messages/DataATCMsg.cpp \
 ../src/Messages/DataCTAMsg.cpp \
@@ -14,6 +16,8 @@ CPP_SRCS += \
 ../src/Messages/StopMsg.cpp 
 
 OBJS += \
+./src/Messages/ACKsliceMsg.o \
+./src/Messages/AddCameraMsg.o \
 ./src/Messages/CoopInfoMsg.o \
 ./src/Messages/DataATCMsg.o \
 ./src/Messages/DataCTAMsg.o \
@@ -24,6 +28,8 @@ OBJS += \
 ./src/Messages/StopMsg.o 
 
 CPP_DEPS += \
+./src/Messages/ACKsliceMsg.d \
+./src/Messages/AddCameraMsg.d \
 ./src/Messages/CoopInfoMsg.d \
 ./src/Messages/DataATCMsg.d \
 ./src/Messages/DataCTAMsg.d \

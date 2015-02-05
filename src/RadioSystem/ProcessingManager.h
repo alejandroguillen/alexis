@@ -65,6 +65,7 @@ typedef struct slices{
 	int kpts_size;
 	int features_size;
 	int col_offset;
+	double creationTime;
 	
 }slices;
 
@@ -137,6 +138,8 @@ private:
 	bool secondprocess;
 
 	boost::mutex ACK_mutex;
+
+	double creationTime;
 		
 };
 

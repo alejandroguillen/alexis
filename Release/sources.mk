@@ -28,8 +28,8 @@ src/Tasks \
 src/TaskManager \
 src/S2GInterface \
 src/RadioSystem/WiFi \
-src/RadioSystem/Telosb \
 src/RadioSystem \
+src/RadioSystem/Telosb \
 src/NodeManager \
 src/MultimediaSystem/thirdparty/coder \
 src/MultimediaSystem/thirdparty/agast/src \

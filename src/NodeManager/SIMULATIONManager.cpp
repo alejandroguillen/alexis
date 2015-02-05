@@ -8,7 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <opencv2/opencv.hpp>
-#include <highgui.h>
+#include "opencv2/highgui/highgui.hpp"
 #include "NodeManager/NodeManager.h"
 #include "Tasks/Tasks.h"
 #include "Messages/DataATCMsg.h"
