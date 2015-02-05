@@ -423,7 +423,7 @@ void NodeManager::notify_msg(Message *msg){
 
 int NodeManager::notify_endTask(){
 	cout << "NM: a end-task notification has been received" << endl;
-	cur_task_finished.notify_all();
+	cur_task_finished.notify_one();
 
 	return 0;
 }

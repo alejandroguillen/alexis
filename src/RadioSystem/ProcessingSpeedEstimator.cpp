@@ -109,12 +109,10 @@ int ProcessingSpeedEstimator::AddObservation(float Tdetect, float Textract,
 	
 	//std::ifstream configfile(LB_CONFIG_FILE);
 
-	std::ofstream out("Pdpx.txt", std::ios::app);
-	std::ofstream outb("Pdip.txt", std::ios::app);
-	std::ofstream outa("Pe.txt", std::ios::app);
-	out << Pdpx_ << std::endl;
-	outb << Pdip_ << std::endl;
-	outa << Pe_ << std::endl;
+	std::ofstream out("Pdpx-Pdip-Pe.txt", std::ios::app);
+
+	out << Pdpx_ << "		" << Pdip_ << "		" << Pe_ << std::endl;
+
 	out.close();
 	
 	return 0;

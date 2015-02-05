@@ -271,7 +271,7 @@ void OffloadingManager::estimate_parameters(cooperator* coop) {
 			out.open("P4.txt", std::ios::app);	
 		else if(coop->id == 5)
 			out.open("P5.txt", std::ios::app);
-		out << coop->Ptcoef << " " << coop->Ctcoef << " " << coop->completionTime << " " << coop->Npixels << " " << coop->Nkeypoints << " " << coop->idleTime << std::endl;
+		out << coop->Ptcoef << " " << coop->Ctcoef << " " << coop->Npixels << " " << coop->Nkeypoints << " " << coop->idleTime << " " << coop->txTime << " " << coop->completionTime << std::endl;
 		out.close();
 		
 }

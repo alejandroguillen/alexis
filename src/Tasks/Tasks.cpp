@@ -313,7 +313,6 @@ void SendWiFiMessageTask::execute(){
 	dest->writeMsg(msg_to_send);
 	boost::mutex::scoped_lock lk(task_monitor);
 	completed = true;
-
 }
 
 void SendMessageTask::execute(){

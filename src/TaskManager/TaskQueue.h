@@ -25,6 +25,10 @@ public:
 	int size();
 	void pop();
 	void wait_for_data();
+	
+	bool try_pop(Task* t);
+	void push2(Task* t);
+	void wait_and_pop(Task* t);
 
 private:
 	queue<Task*> task_queue;

@@ -156,7 +156,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 	int z= subsliceList.size();
 
 	//ONE COOP only
-	if(cameraList.slice_id == 1 && cameraList.slice_id == cameraList.slices_total)
+	if(cameraList.slice_id == cameraList.slices_total == 1)
 	{
 		//first slice needs 2 subslicess
 		if(subslices_iteration == 1)
@@ -232,7 +232,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 	else
 	{ 
 		//first coop needs 2 subslices for first slice
-		if(cameraList.slice_id == 1 && subslices_iteration == 1)
+		if(cameraList.sliceid == 1 && subslices_iteration == 1)
 		{
 			Mat subslice0 = imdecode(subsliceList[0].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat subslice1 = imdecode(subsliceList[1].data, CV_LOAD_IMAGE_GRAYSCALE);
@@ -251,11 +251,10 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 			return slicedone;
 		}
 		//others coops (not last) needs 3 subslices
-		else if(subslices_iteration >= 1 && cameraList.slice_id != cameraList.slices_total)
+		else if(subslices_iteration >= 1 && cameraList.sliceid != cameraList.slices_total)
 		{
-			int j;
-			if(cameraList.slice_id == 1) j=subslices_iteration;
-			else j=subslices_iteration+1;
+			if(cameraList.sliceid == 1) int j=subslices_iteration;	
+			else int j=subslices_iteration+1;
 			Mat subslice0 = imdecode(subsliceList[j-2].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat subslice1 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat subslice2 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
@@ -283,9 +282,9 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 			}
 			sliceList.push_back(temp_slice);
 			return slicedone;
-		}
+		
 		//last coop 
-		else if(cameraList.slice_id == cameraList.slices_total)
+		else if(cameraList.sliceid == cameraList.slices_total)
 		{
 			//first and middle slices need 3 subslices
 			if(subslices_iteration >=1 &&  subslices_iteration != cameraList.sub_slices_total-1)

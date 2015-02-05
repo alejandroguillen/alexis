@@ -58,7 +58,7 @@ typedef struct subslice{
 }subslice;
 
 
-typedef struct slice{
+typedef struct slices{
 
 	int id; 
 	bool last_subslices_iteration;
@@ -82,7 +82,7 @@ private:
 	
 	void notifyToProcess(int i);
 	Mat mergeSubSlices(int subslices_iteration, vector<subslice> subsliceList);
-	void getData(int subslices_iteration);
+	vector<subslice> getData(int subslices_iteration);
 	void setData();
 
 	int count_subslices;
@@ -135,6 +135,8 @@ private:
 	boost::condition second_condition;
 	bool secondprocesscond;
 	bool secondprocess;
+
+	boost::mutex ACK_mutex;
 		
 };
 

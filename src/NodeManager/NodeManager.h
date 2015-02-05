@@ -94,7 +94,7 @@ public:
 	void AddCameraMessage(int cameraid); //ALEXIS 11/01 ADD CAMERA MESSAGE
 	void DATC_processing_thread_cooperator(int i, vector<uchar> data, Connection* c, double detection_threshold, int max_features);
 	
-	void Processing_slice(int processingID, int subslices_iteration, Mat slices, double detection_threshold, int max_features);
+	void Processing_slice(int processingID, int subslices_iteration, Mat slice, double detection_threshold, int max_features);
 	void TransmissionFinished(int i, Connection* c);
 	void notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& features, double detTime, double descTime, double processingTime, Connection* c);
 
