@@ -206,7 +206,7 @@ void Algorithms::CutVectorOptimization(int num_cooperators,
 	if(num_cooperators == 1){
 		optimal_cutvector_.resize(1);
 		optimal_cutvector_[0] = width_;
-		//T = C*hw + P(hw + alphad*Nip)
+		//T = C*h*overlap + P(hw + alphad*Nip)
 		est_completion_time_=c[0]*height_*width_ + p[0]*(height_*width_ + alpha_d_*Mopt_);
 	}
 	else{

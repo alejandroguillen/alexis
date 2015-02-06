@@ -55,6 +55,8 @@ ProcessingManager::ProcessingManager(NodeManager* nm, int i){
 		secondprocesscond=false;
 		secondprocess=false;
 
+		subslices_iteration = 0;
+
 		creationTime = getTickCount();
 
 		p_thread = boost::thread(&ProcessingManager::Processing_thread_cooperator, this, i);
@@ -359,6 +361,8 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 	cout << "PM: I'm entering the Processing thread "<< i+1 << endl;
 
 	while(1){
+
+		cerr << "1 available: " << subslices_iteration << " subslices_iteration //////////////////////////////////////////////////////// in " << i+1 << endl;
 		subslices_iteration++;
 		cerr << "1 available: " << subslices_iteration << " subslices_iteration //////////////////////////////////////////////////////// in " << i+1 << endl;
 		vector<subslice> subsliceListsave = getData(subslices_iteration);
