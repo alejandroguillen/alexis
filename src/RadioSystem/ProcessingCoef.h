@@ -16,12 +16,16 @@ public:
 	ProcessingCoef();
 	ProcessingCoef(float Pt_exp_coef);
 	float getProcessingTimeCoef();
-	float getAlphad(float Pdpx, float Pdip, float Pe);
+	float setAlphad(float Pdpx, float Pdip, float Pe);
+	float getAlphad();
 	void AddObservation(float processingtime, int Npixels, int Nip, double alphad);
+	void setOverlap(double overlap_normalized, bool double_overlap);
 private:
 	float Ptcoef;
 	int pt_samples;
 	float Pt_exp_coef_;
+	float alpha_d_;
+	double overlapNpixels;
 };
 
 #endif /* PROCESSINGCOEF_H_ */

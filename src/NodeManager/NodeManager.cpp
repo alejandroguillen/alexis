@@ -13,7 +13,7 @@
 #include "RadioSystem/ProcessingManager.h"
 #include "NodeManager/SIMULATIONManager.h"
 
-#define NUM_COOP 1 //CHANGE number of Cooperators -------------------------------------------------------------------------------------
+#define NUM_COOP 2 //CHANGE number of Cooperators -------------------------------------------------------------------------------------
 using namespace std;
 
 //todo: deadline timer for keeping the system active even if the start/stop message is not received
@@ -194,7 +194,7 @@ void NodeManager::notify_msg(Message *msg){
 		{
 			
 			//ALEXIS SIMULATION 03/02
-			datc_param.max_features =  50;
+			datc_param.max_features = 400;
 			datc_param.det = 5;
 			datc_param.detection_threshold = 40;
 			datc_param.desc = 3;

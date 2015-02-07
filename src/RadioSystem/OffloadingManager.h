@@ -61,6 +61,8 @@ typedef struct cooperator{
 	TransmissionCoef* transmission_time_coef;
 	double Ctcoef;
 	
+	double alpha_d;
+
 }cooperator;
 
 class OffloadingManager{
@@ -89,7 +91,7 @@ public:
 	void removeCooperator(Connection* c);
 	Mat computeLoads(Mat& image);
 	double getNextDetectionThreshold();
-	void estimate_parameters(cooperator* coop);
+	void estimate_parameters(cooperator* coop, int i);
 	void transmitLoads();
 	void transmitStartDATC(StartDATCMsg* msg);
 	int probeLinks();
@@ -138,6 +140,8 @@ private:
 	int width_;
 	int height_;
 	double overlap_;
+
+	double overlap_normalized;
 
 };
 

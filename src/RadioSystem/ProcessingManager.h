@@ -111,7 +111,7 @@ private:
 	boost::thread p_thread;
 	
 	bool waitcamera;
-	bool firstsubslice;
+	//bool firstsubslice;
 	boost::mutex m_mutex;
 	//boost::condition m_condition;
 	

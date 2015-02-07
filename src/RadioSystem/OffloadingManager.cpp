@@ -23,13 +23,14 @@ void OffloadingManager::addCooperator(Connection* c){
 	temp_coop.transmission_time_coef = new TransmissionCoef();
 	//Set initial values for the parameters:
 	temp_coop.bandwidth = 20e6;
-	temp_coop.Pdpx = 3.2e6;
-	temp_coop.Pdip = 10000;
-	temp_coop.Pe = 1000;
+	temp_coop.Pdpx = 250000; //3.2e6
+	temp_coop.Pdip = 1500; //10000
+	temp_coop.Pe = 250; //1000
 	
 	//Ptcoef*(1+alpha_d) >= S*Ctcoef
-	temp_coop.Ctcoef = 0.0000004;
-	temp_coop.Ptcoef = 0.0000002;
+	temp_coop.Ctcoef = 0.000003; //0.0003
+	temp_coop.Ptcoef = 0.0000026; //0.0000002
+	temp_coop.alpha_d = 1000; //3520
 	
 	//ALEXIS 09/01 COOP ID
 	int m=2;
@@ -64,20 +65,22 @@ void OffloadingManager::removeCooperator(Connection* c){
 	}
 }
 
-
 Mat OffloadingManager::computeLoads(Mat& image){
 	vector<double> c;
 	vector<double> p;
+	vector<double> alphad;
 
 	sortCooperators();
 	
 	for(int i=0;i<cooperators_to_use;i++){
 		c.push_back(cooperatorList[i].Ctcoef);
 		p.push_back(cooperatorList[i].Ptcoef);
+		alphad.push_back(cooperatorList[i].alpha_d);
 	}
 	
 	//double overlap = OVERLAP;
-	double overlap = (double)168.0/(2*image.cols); 
+	double overlap = (double)168.0/(2*image.cols);
+	overlap_normalized = image.cols*image.rows*overlap;
 	algorithms.SetImageParameters(image.cols, image.rows, overlap);
 	width_=image.cols;
 	height_=image.rows;
@@ -85,7 +88,7 @@ Mat OffloadingManager::computeLoads(Mat& image){
 	
 	//Solve:
 	double lpsolveTime = getTickCount();
-	algorithms.CutVectorOptimization(cooperators_to_use, c, p);
+	algorithms.CutVectorOptimization(cooperators_to_use, c, p, alphad);
 	lpsolveTime = (getTickCount()-lpsolveTime)/getTickFrequency();
 	std::cerr << "lpsolveTime = " << lpsolveTime << "sec\n";
 	vector<int> cutvector = algorithms.getCutVector();
@@ -94,6 +97,14 @@ Mat OffloadingManager::computeLoads(Mat& image){
 		std::cerr << "cutvector: " << cutvector[j] << std::endl;
 	}
 	std::cerr << "Estimated completion time: " << algorithms.getCompletionTime() << "sec\n";
+
+	//if cuts=0, have to use less cooperators
+	while(cutvector[0] == 0){
+		cooperators_to_use = cooperators_to_use-1;
+		for(int j=0;j<cutvector.size();j++){
+			cutvector[j]=cutvector[j+1];
+		}
+	}
 
 	//Set loads in cooperatorList
 	int s1, s2;
@@ -143,7 +154,7 @@ void OffloadingManager::transmitStartDATC(StartDATCMsg* msg){
 		algorithms.setInitialDetectionThreshold(INITIAL_DETECTION_THRESHOLD);
 	}
 	msg->setDetectorThreshold(next_detection_threshold);
-	msg->setMaxNumFeat(50*1.1); //ALEXIS SIMULATION 03/02
+	msg->setMaxNumFeat(400*1.1); //ALEXIS SIMULATION 03/02
 	msg->setSource(node_manager->node_id); //ALEXIS 11/12 can be changed by node_id
 	for(int i=0;i<cooperatorList.size();i++){ //ORIGINAL
 	//for(int i=0;i<cooperators_to_use;i++){ //ALEXIS 11/12 -> to not sent multiple StartDATCMsg unnecessary. 14/12 not working correctly
@@ -235,7 +246,7 @@ double OffloadingManager::getNextDetectionThreshold() {
 	return next_detection_threshold;
 }
 
-void OffloadingManager::estimate_parameters(cooperator* coop) {
+void OffloadingManager::estimate_parameters(cooperator* coop, int i) {
 	//Processing parameters
 	int ret = coop->processing_speed_estimator->AddObservation(coop->detTime, coop->descTime, coop->Npixels, coop->Nkeypoints);
 	if(ret==0){
@@ -244,17 +255,28 @@ void OffloadingManager::estimate_parameters(cooperator* coop) {
 		if(coop->Nkeypoints > 0) coop->Pe = coop->processing_speed_estimator->getPe();
 	}
 	//alpha_d
-	double alpha_d = coop->processing_time_coef->getAlphad(coop->Pdpx, coop->Pdip, coop->Pe);
+	double alpha_d = coop->processing_time_coef->setAlphad(coop->Pdpx, coop->Pdip, coop->Pe);
+	coop->alpha_d = alpha_d;
 
 	//Transmission time Coef
 	coop->transmission_time_coef->AddObservation(coop->txTime, coop->Npixels);
 	coop->Ctcoef = coop->transmission_time_coef->getTransmissionTimeCoef();
 	//coop->bandwidth = 8*coop->Npixels/coop->txTime; //FIXME Only for bmp encoding, 8bits per pixel
 
+
 	//Processing time Coef
+	bool double_overlap = true;
+	if (i==0 || i == cooperators_to_use-1){
+		double_overlap = false;
+	}
+	coop->processing_time_coef->setOverlap(overlap_normalized, double_overlap);
 	coop->processing_time_coef->AddObservation(coop->processingTime, coop->Npixels, coop->Nkeypoints, alpha_d);
 	coop->Ptcoef = coop->processing_time_coef->getProcessingTimeCoef();
 	
+	/////WITHOUT BBONES
+	//coop->Ctcoef = 3.70e-6;
+	//coop->Ptcoef = 6.40e-6;
+
 	std::cerr << " Node: " << coop << std::endl;
 	std::cerr << "estimate_processing_parameters: detTime=" << coop->detTime << "\tdescTime=" << coop->descTime << "\tNpix=" << coop->Npixels << "\tNkp=" << coop->Nkeypoints << "\n";
 	std::cerr << "estimate_processing_parameters: Pdpx=" << coop->Pdpx << "\tPdip=" << coop->Pdip << "\tPe=" << coop->Pe << "\n";
@@ -271,7 +293,7 @@ void OffloadingManager::estimate_parameters(cooperator* coop) {
 			out.open("P4.txt", std::ios::app);	
 		else if(coop->id == 5)
 			out.open("P5.txt", std::ios::app);
-		out << coop->Ptcoef << " " << coop->Ctcoef << " " << coop->Npixels << " " << coop->Nkeypoints << " " << coop->idleTime << " " << coop->txTime << " " << coop->completionTime << std::endl;
+		out << coop->Ptcoef << " " << coop->Ctcoef << " " << coop->Npixels << " " << coop->Nkeypoints << " " << coop->idleTime << " " << coop->txTime << " " << coop->completionTime << " " << alpha_d << std::endl;
 		out.close();
 		
 }
@@ -303,7 +325,7 @@ void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& feat
 					keypoint_buffer.push_back(kpts[j]);
 				}
 				cooperatorList[i].Nkeypoints = kpts.size();
-				estimate_parameters(&cooperatorList[i]);
+				estimate_parameters(&cooperatorList[i],i);
 				break;
 			}
 		}
@@ -329,12 +351,18 @@ void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& feat
 		cerr << "start timer: " << completionTimeGlobal << " ticks ///////////////////////////////////////////////////////////" <<endl;
 		std::cerr << "Total Completion Time: " << completionTimeGlobal << "\n";
 		
-			std::ofstream out;
+		vector<int> cutvector = algorithms.getCutVector();
+
+		std::ofstream out;
 			if(node_manager->node_id == 1)
 				out.open("completionTimeGlobalC1.txt", std::ios::app);
 			else
 				out.open("completionTimeGlobalC2.txt", std::ios::app);
-			out << completionTimeGlobal << std::endl;
+			out << "Real: "<< completionTimeGlobal << "	Estimated: "<< algorithms.getCompletionTime();
+			for(size_t j=0; j<cutvector.size(); j++){
+				out << "	cutvector: " << cutvector[j] << " ";
+			}
+			out << std::endl;
 			out.close();
 			
 		t.cancel();

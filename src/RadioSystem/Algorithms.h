@@ -45,20 +45,20 @@ public:
 	void SetTargetKeypoints(int target_num_keypoints);
 	void AddKeypoints(vector<KeyPoint>& kpts);
 	float GetNextDetectionThreshold();
-	void CutVectorOptimization(int num_cooperators, vector<double>& c, vector<double>& p);
+	void CutVectorOptimization(int num_cooperators, vector<double>& c, vector<double>& p, vector<double>& alphad);
 	std::vector<int> getCutVector();
 	float getCompletionTime();
 	void setInitialDetectionThreshold(double th);
 	void reset();
 	double getAlphad();
-//		void UpdateNewImgParams(int h, int w, int M);
+//	void UpdateNewImgParams(int h, int w, int M);
 //	void UpdateNewIPscores(const std::vector<float>* IPscores);
 //	void UpdateNodeInfo();
 
 private:
 	void UpdateBDR();
 	void UpdateFDR();
-	int lp_matrix_formulation(vector<double>& c, vector<double>& p);
+	int lp_matrix_formulation(vector<double>& c, vector<double>& p, vector<double>& alphad);
 	void lp_create_model();
 	void set_uniform_quantiles();
 //	void lp_update_quantiles();
@@ -103,6 +103,8 @@ private:
 	int use_fixed_uniform_cuts_;
 	
 	double alpha_d_;
+
+	int temporary_num_cooperators;
 };
 
 #endif /* ALGORITHMS_H_ */

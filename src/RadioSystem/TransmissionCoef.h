@@ -18,7 +18,7 @@ public:
 	float getTransmissionTimeCoef();
 	void AddObservation(float txtime, int Npixels);
 private:
-	float Ctcoef;
+	double Ctcoef;
 	int training_samples;
 	float tx_exp_coef_;
 };

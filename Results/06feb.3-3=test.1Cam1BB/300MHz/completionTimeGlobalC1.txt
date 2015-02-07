@@ -1,77 +1,32 @@
-8.26006
-2.4163
-2.29024
-2.27847
-2.34499
-2.30234
-2.30602
-3.10033
-2.35494
-2.34285
-2.35379
-2.29469
-2.32262
-2.34129
-2.341
-2.32824
-2.3419
-2.31434
-2.32006
-2.30293
-2.32225
-2.3268
-2.29348
-2.28971
-2.32065
-2.2982
-2.31553
-2.34421
-2.29407
-2.28629
-2.31413
-2.30475
-2.27529
-2.2914
-2.9674
-2.2945
-2.32759
-2.30435
-2.29559
-2.33579
-2.29207
-2.32007
-2.27879
-2.31039
-2.33635
-2.34272
-2.30733
-2.32854
-2.32194
-2.26138
-2.36512
-2.29189
-2.38718
-2.29535
-2.32106
-2.28402
-2.36525
-2.27881
-2.30802
-2.30344
-2.33946
-2.28889
-2.93532
-2.33188
-2.35524
-2.31592
-2.33021
-2.294
-2.24034
-2.29824
-2.28907
-2.29004
-2.30443
-2.28498
-2.24852
-2.31347
-2.33671
+Real: 8.20799	Estimated: 0.26784	cutvector: 640 
+Real: 2.36454	Estimated: 4.34598	cutvector: 640 
+Real: 2.15869	Estimated: 2.80946	cutvector: 640 
+Real: 2.5014	Estimated: 2.47097	cutvector: 640 
+Real: 2.24701	Estimated: 2.39905	cutvector: 640 
+Real: 2.16903	Estimated: 2.27277	cutvector: 640 
+Real: 2.23098	Estimated: 2.21904	cutvector: 640 
+Real: 2.14987	Estimated: 2.16293	cutvector: 640 
+Real: 2.23777	Estimated: 2.1249	cutvector: 640 
+Real: 2.27652	Estimated: 2.10816	cutvector: 640 
+Real: 2.79102	Estimated: 2.1141	cutvector: 640 
+Real: 2.30055	Estimated: 2.10973	cutvector: 640 
+Real: 2.17915	Estimated: 2.11613	cutvector: 640 
+Real: 2.20473	Estimated: 2.09159	cutvector: 640 
+Real: 2.23313	Estimated: 2.08154	cutvector: 640 
+Real: 2.2357	Estimated: 2.08987	cutvector: 640 
+Real: 2.25568	Estimated: 2.06675	cutvector: 640 
+Real: 2.23444	Estimated: 2.07943	cutvector: 640 
+Real: 2.25989	Estimated: 2.05816	cutvector: 640 
+Real: 2.82804	Estimated: 2.07684	cutvector: 640 
+Real: 2.22717	Estimated: 2.08341	cutvector: 640 
+Real: 2.18732	Estimated: 2.09256	cutvector: 640 
+Real: 2.30332	Estimated: 2.07065	cutvector: 640 
+Real: 2.1826	Estimated: 2.09857	cutvector: 640 
+Real: 2.17449	Estimated: 2.08375	cutvector: 640 
+Real: 2.24315	Estimated: 2.08464	cutvector: 640 
+Real: 2.29292	Estimated: 2.07923	cutvector: 640 
+Real: 2.83331	Estimated: 2.09032	cutvector: 640 
+Real: 2.33045	Estimated: 2.10746	cutvector: 640 
+Real: 2.00308	Estimated: 2.1136	cutvector: 640 
+Real: 2.76454	Estimated: 2.12795	cutvector: 640 
+Real: 2.88817	Estimated: 2.10625	cutvector: 640 

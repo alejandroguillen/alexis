@@ -41,6 +41,7 @@ ProcessingManager::ProcessingManager(NodeManager* nm, int i){
 		extractor->setDescriptor("BRISK",&dscPrms);
 		encoder = new VisualFeatureEncoding();
 		*/
+		processingTime =0;
 		processcond = false;
 		processempty=true;
 		node_manager = nm;
@@ -56,6 +57,7 @@ ProcessingManager::ProcessingManager(NodeManager* nm, int i){
 		secondprocess=false;
 
 		subslices_iteration = 0;
+		count_subslices=0;
 
 		creationTime = getTickCount();
 
@@ -142,7 +144,7 @@ void ProcessingManager::addSubSliceData(DataCTAMsg* msg){
 	//subsliceList[j].cond == true;
 	
 	//notifyToProcess(count_subslices);
-	cerr << "PM: added subslice from Camera " << cameraList.id << endl;
+	cerr << "PM: added subslice from Camera " << cameraList.id << " of "<< cameraList.sub_slices_total <<" total subslices"<< endl;
 	setData();
 	
 	//send ACK to camera when Receiving all subslices
@@ -158,6 +160,8 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 	int col_offset;
 	temp_slice.last_subslices_iteration = false;
 	int z= subsliceList.size();
+
+	double notprocessingTime = getTickCount();
 
 	//ONE COOP only
 	if(cameraList.slice_id == 1 && cameraList.slice_id == cameraList.slices_total)
@@ -254,6 +258,9 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 		
 			temp_slice.id = subslices_iteration;
 			temp_slice.col_offset = col_offset;
+			if(subslices_iteration == cameraList.sub_slices_total-1){
+				temp_slice.last_subslices_iteration = true;
+			}
 			temp_slice.creationTime = (getTickCount()-creationTime)/getTickFrequency();
 			sliceList.push_back(temp_slice);
 			return slicedone;
@@ -344,6 +351,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 				temp_slice.id = subslices_iteration;
 				temp_slice.col_offset = col_offset;
 				temp_slice.last_subslices_iteration = true;	
+				cerr << "last subslice" << endl;
 				temp_slice.creationTime = (getTickCount()-creationTime)/getTickFrequency();
 				sliceList.push_back(temp_slice);
 				return slicedone;
@@ -371,6 +379,7 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 		//merge subslices to a slice
 		int f = subsliceListsave.size();
 		cerr << "3 available: " << f << " slices //////////////////////////////////////////////////////// in " << i+1 << endl;
+		cerr << "subslices_iteratoion:" << subslices_iteration << "	slice id "<< cameraList.slice_id << "	subslice total: "<< cameraList.sub_slices_total << endl;
 		Mat slice_merged = mergeSubSlices(subslices_iteration,subsliceListsave);
 		
 		//start processing timer
@@ -406,7 +415,7 @@ void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration_,vecto
 		kpts[j].pt.x = kpts[j].pt.x + sliceList[i].col_offset;
 		keypoint_buffer.push_back(kpts[j]);
 	}
-		
+	cerr << "subslice_iteration " << subslices_iteration << "last subslices iteration? " << sliceList[i].last_subslices_iteration << endl;
 	//if last slice in the Coop, do an average of the parameters and send to camera
 	if(sliceList[i].last_subslices_iteration==true){
 		

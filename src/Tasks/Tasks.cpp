@@ -15,7 +15,8 @@
 void AcquireImageTask::execute(){
 	cout << "executing the acquire_image_task" << endl;
 	//imgAcq->takePicture(image);
-	image = imread("util/sample_VGA_1.jpg");
+	//image = imread("util/sample_VGA_1.jpg");
+	image = imread("util/sample_VGA_3.jpg");
 	cout << "ok!" << endl;
 	boost::mutex::scoped_lock lk(task_monitor);
 

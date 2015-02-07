@@ -200,14 +200,14 @@ float Algorithms::GetNextDetectionThreshold() {
 }
 
 void Algorithms::CutVectorOptimization(int num_cooperators,
-		vector<double>& c, vector<double>& p) {
+		vector<double>& c, vector<double>& p, vector<double>& alphad) {
 	int ret;
 	num_using_nodes_=num_cooperators;
 	if(num_cooperators == 1){
 		optimal_cutvector_.resize(1);
 		optimal_cutvector_[0] = width_;
 		//T = C*h*overlap + P(hw + alphad*Nip)
-		est_completion_time_=c[0]*height_*width_ + p[0]*(height_*width_ + alpha_d_*Mopt_);
+		est_completion_time_=c[0]*height_*width_*overlap_ + p[0]*(height_*width_ + alphad[0]*Mopt_);
 	}
 	else{
 		if(use_fixed_uniform_cuts_ == 1){
@@ -217,10 +217,11 @@ void Algorithms::CutVectorOptimization(int num_cooperators,
 			}
 			return;
 		}
-		lp_matrix_formulation(c, p);
+		lp_matrix_formulation(c, p, alphad);
 		lp_create_model();
 		ret = lp_solve_model();
 		lp_delete_model();
+		temporary_num_cooperators = num_cooperators;
 
 		if(ret != 0){ //Solver error
 			//If we don't have a previous solution, set uniform cuts
@@ -299,15 +300,17 @@ void Algorithms::UpdateFDR() {
 	}
 }
 
-int Algorithms::lp_matrix_formulation(vector<double>& c, vector<double>& p) {
+int Algorithms::lp_matrix_formulation(vector<double>& c, vector<double>& p, vector<double>& alphad) {
 	//Matrix formulation from the paper 'Real-time Distributed Visual Feature Extraction from Video in Sensor Networks'
 
 	REAL *C =(REAL*)calloc(num_using_nodes_,sizeof(REAL));
 	REAL *P =(REAL*)calloc(num_using_nodes_,sizeof(REAL));
+	REAL *Alphad =(REAL*)calloc(num_using_nodes_,sizeof(REAL));
 
 	for(int i=0;i<num_using_nodes_;i++){
 		C[i] = c.at(i);
 		P[i] = p.at(i);
+		Alphad[i] = alphad.at(i);
 	}
 
 	if(quantiles_available_==false){
@@ -354,22 +357,21 @@ int Algorithms::lp_matrix_formulation(vector<double>& c, vector<double>& p) {
 		}
 	}
 
-	//Ttransmit (non-overlapping):
-	for(int n=0; n<num_using_nodes_; n++){
+	//Ttransmit: D3*xi + G3 = G3
+	/*for(int n=0; n<num_using_nodes_; n++){
 		for(int m=0; m<num_using_nodes_; m++){
 			if(n==m){
-				lp_D[m*num_using_nodes_+n] += height_*width_*C[n];
+				lp_D[m*num_using_nodes_+n] += 0;
 			}else if(m==n+1){
-				lp_D[m*num_using_nodes_+n] += -height_*width_*C[n+1];
+				lp_D[m*num_using_nodes_+n] += 0;
 			}
 		}
-	}
+	}*/
 
-	lp_G[0] += height_*width_*overlap_*C[0];
-	for(int n=1; n<num_using_nodes_-1; n++){
-		lp_G[n] += 2*height_*width_*overlap_*C[n];
+	lp_G[0] += 2*height_*width_*overlap_*C[0];
+	for(int n=1; n<num_using_nodes_; n++){
+		lp_G[n] += 3*height_*width_*overlap_*C[n];
 	}
-	lp_G[num_using_nodes_-1] += height_*width_*overlap_*C[num_using_nodes_-1];
 	
 
 	//Tdetect (as function of the area): P = 1/Pdpx
@@ -387,13 +389,14 @@ int Algorithms::lp_matrix_formulation(vector<double>& c, vector<double>& p) {
 	//E : Tdetect (as function of the number of interest points) + Textract (as function of the number of interest points):
 		//P*alpha_d = 1/Pdip + 1/Pe
 	for(int n=0; n<num_using_nodes_; n++){
-		lp_E[n] += P[n]*alpha_d_;
+		lp_E[n] += P[n]*Alphad[n];
 	}
 
 	free(lp_CM);
 
 	free(C);
 	free(P);
+	free(Alphad);
 }
 
 void Algorithms::lp_create_model() {
@@ -430,19 +433,27 @@ void Algorithms::lp_create_model() {
 		add_constraintex(lp,j+2,row,colno,LE,-lp_G[i]);
 	}
 
-	//Increasing constraints, considering the overlap, (x[n]-x[n+1]<=-2*overlap_)
+	//Increasing constraints, considering the overlap, (x[n]-x[n+1]<=-overlap_)
 	for(i=0;i<num_using_nodes_-2;i++){
 		colno[0]=POS_Xi(i);
 		row[0]=1;
 		colno[1]=POS_Xi(i+1);
 		row[1]=-1;
-		add_constraintex(lp,2,row,colno,LE,-2*overlap_);
+		add_constraintex(lp,2,row,colno,LE,-overlap_);
 	}
 	colno[0]=POS_Xi(i);
 	row[0]=1;
 	colno[1]=POS_Xi(i+1);
 	row[1]=-1;
 	add_constraintex(lp,2,row,colno,LE,-overlap_);
+
+	//ALEXIS 07/02
+	//every cut has to be different to 0: (x[n]>0) => (-x[n]<=-overlap)
+	for(i=0;i<num_using_nodes_;i++){
+		colno[0]=POS_Xi(i);
+		row[0]=-1;
+		add_constraintex(lp,1,row,colno,LE,-overlap_);
+	}
 
 
 	//And the last cut must be 1: (x[num_using_nodes_]=1)
