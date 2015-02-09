@@ -449,11 +449,11 @@ void Algorithms::lp_create_model() {
 
 	//ALEXIS 07/02
 	//every cut has to be different to 0: (x[n]>0) => (-x[n]<=-overlap)
-	for(i=0;i<num_using_nodes_;i++){
+	/*for(i=0;i<num_using_nodes_;i++){
 		colno[0]=POS_Xi(i);
 		row[0]=-1;
 		add_constraintex(lp,1,row,colno,LE,-overlap_);
-	}
+	}*/
 
 
 	//And the last cut must be 1: (x[num_using_nodes_]=1)

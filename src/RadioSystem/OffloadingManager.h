@@ -143,6 +143,8 @@ private:
 
 	double overlap_normalized;
 
+	vector<int> asignmentvector;
+
 };
 
 

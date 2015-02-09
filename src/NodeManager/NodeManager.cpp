@@ -13,7 +13,7 @@
 #include "RadioSystem/ProcessingManager.h"
 #include "NodeManager/SIMULATIONManager.h"
 
-#define NUM_COOP 2 //CHANGE number of Cooperators -------------------------------------------------------------------------------------
+#define NUM_COOP 3 //CHANGE number of Cooperators -------------------------------------------------------------------------------------
 using namespace std;
 
 //todo: deadline timer for keeping the system active even if the start/stop message is not received

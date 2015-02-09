@@ -105,6 +105,13 @@ Mat OffloadingManager::computeLoads(Mat& image){
 			cutvector[j]=cutvector[j+1];
 		}
 	}
+	cutvector.resize(cooperators_to_use);
+
+	/*//save assignment position
+	asignmentvector.resize(cooperators_to_use);
+	for(int j=0; j<cooperators_to_use; j++){
+		asignmentvector[j] = cooperatorList[j].id;
+	}*/
 
 	//Set loads in cooperatorList
 	int s1, s2;
@@ -358,9 +365,9 @@ void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& feat
 				out.open("completionTimeGlobalC1.txt", std::ios::app);
 			else
 				out.open("completionTimeGlobalC2.txt", std::ios::app);
-			out << "Real: "<< completionTimeGlobal << "	Estimated: "<< algorithms.getCompletionTime();
+			out << "Real: "<< completionTimeGlobal << "	Estimated: "<< algorithms.getCompletionTime() << "	";
 			for(size_t j=0; j<cutvector.size(); j++){
-				out << "	cutvector: " << cutvector[j] << " ";
+				out << " "<< cooperatorList[j].id << " -> cut: " << cutvector[j] << " ";
 			}
 			out << std::endl;
 			out.close();

@@ -428,8 +428,10 @@ void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration_,vecto
 			std::ofstream out;
 			if(node_manager->node_id == 3)
 				out.open("checkP3.txt", std::ios::app);
-			else
+			else if(node_manager->node_id == 4)
 				out.open("checkP4.txt", std::ios::app);
+			else
+				out.open("checkP5.txt", std::ios::app);
 			for(int g=0;g<sliceList.size();g++){
 				check_id = sliceList[g].id;
 				check_col_offset = sliceList[g].col_offset;
