@@ -13,7 +13,7 @@
 #include "RadioSystem/ProcessingManager.h"
 #include "NodeManager/SIMULATIONManager.h"
 
-#define NUM_COOP 3 //CHANGE number of Cooperators -------------------------------------------------------------------------------------
+#define NUM_COOP 2 //CHANGE number of Cooperators -------------------------------------------------------------------------------------
 using namespace std;
 
 //todo: deadline timer for keeping the system active even if the start/stop message is not received
@@ -1235,7 +1235,7 @@ void NodeManager::TransmissionFinished(int i, Connection* c){
 }
 
 
-void NodeManager::notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& features, double detTime, double descTime, double processingTime, Connection* c){
+void NodeManager::notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& features, double detTime, double descTime, double mergeTime, double processingTime, Connection* c){
 
 	//boost::mutex monitor;
 	//boost::mutex::scoped_lock lk(monitor);
@@ -1277,7 +1277,7 @@ void NodeManager::notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& f
 	cout << "and " << (int)(features.rows) << "features" << endl;
 	
 	
-	DataATCMsg *atc_msg = new DataATCMsg(frame_id, 0, 1, detTime, descTime, kencTime, processingTime, 0, features.rows, kpts.size(), ft_bitstream, kp_bitstream);
+	DataATCMsg *atc_msg = new DataATCMsg(frame_id, 0, 1, detTime, descTime, mergeTime, processingTime, 0, features.rows, kpts.size(), ft_bitstream, kp_bitstream);
 
 	atc_msg->setTcpConnection(c);
 	atc_msg->setSource(node_id);

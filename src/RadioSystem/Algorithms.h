@@ -31,6 +31,7 @@
 #define USE_FIXED_UNIFORM_CUTS_DEFAULT	0
 
 #define ALPHA_D_DEFAULT 5
+#define TRAINING_PERIOD_DEFAULT 10
 
 using namespace std;
 using namespace cv;
@@ -105,6 +106,10 @@ private:
 	double alpha_d_;
 
 	int temporary_num_cooperators;
+
+	int training_period_;
+
+	int training_period;
 };
 
 #endif /* ALGORITHMS_H_ */

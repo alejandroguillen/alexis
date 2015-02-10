@@ -24,7 +24,9 @@ float TransmissionCoef::getTransmissionTimeCoef() {
 }
 
 void TransmissionCoef::AddObservation(float txtime, int Npixels) {
-	double transmissiontcoeff= txtime/Npixels; // seconds/pixels (seconds/image)
+	double transmissiontcoeff= txtime/Npixels; // seconds/pixel (seconds/image)
+
+	//EXPONENTIAL SMOOTH APPLIED: due to Ctcoef can not change too much during the connection (not change position)
 	if(training_samples <= TX_TRAINING_PERIOD){ //Training period: Arithmetic smoothing
 		training_samples++;
 		Ctcoef = ((training_samples-1)*Ctcoef + transmissiontcoeff)/training_samples;

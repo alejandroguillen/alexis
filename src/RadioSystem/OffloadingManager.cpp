@@ -23,13 +23,14 @@ void OffloadingManager::addCooperator(Connection* c){
 	temp_coop.transmission_time_coef = new TransmissionCoef();
 	//Set initial values for the parameters:
 	temp_coop.bandwidth = 20e6;
-	temp_coop.Pdpx = 250000; //3.2e6
-	temp_coop.Pdip = 1500; //10000
-	temp_coop.Pe = 250; //1000
+	temp_coop.Pdpx = 350000; //250000
+	temp_coop.Pdip = 1000; //1500
+	temp_coop.Pe = 400; //250
+	temp_coop.Pm = 400; //250000
 	
 	//Ptcoef*(1+alpha_d) >= S*Ctcoef
-	temp_coop.Ctcoef = 0.000003; //0.0003
-	temp_coop.Ptcoef = 0.0000026; //0.0000002
+	temp_coop.Ctcoef = 0.0000003; //0.0003
+	temp_coop.Ptcoef = 0.000003; //0.0000002
 	temp_coop.alpha_d = 1000; //3520
 	
 	//ALEXIS 09/01 COOP ID
@@ -255,14 +256,15 @@ double OffloadingManager::getNextDetectionThreshold() {
 
 void OffloadingManager::estimate_parameters(cooperator* coop, int i) {
 	//Processing parameters
-	int ret = coop->processing_speed_estimator->AddObservation(coop->detTime, coop->descTime, coop->Npixels, coop->Nkeypoints);
+	int ret = coop->processing_speed_estimator->AddObservation(coop->detTime, coop->descTime, coop->mergeTime, coop->Npixels, coop->Nkeypoints);
 	if(ret==0){
 		coop->Pdpx = coop->processing_speed_estimator->getPdpx();
 		coop->Pdip = coop->processing_speed_estimator->getPdip();
+		coop->Pm = coop->processing_speed_estimator->getPm();
 		if(coop->Nkeypoints > 0) coop->Pe = coop->processing_speed_estimator->getPe();
 	}
 	//alpha_d
-	double alpha_d = coop->processing_time_coef->setAlphad(coop->Pdpx, coop->Pdip, coop->Pe);
+	double alpha_d = coop->processing_time_coef->setAlphad(coop->Pdpx, coop->Pdip, coop->Pe, coop->Pm);
 	coop->alpha_d = alpha_d;
 
 	//Transmission time Coef
@@ -286,10 +288,10 @@ void OffloadingManager::estimate_parameters(cooperator* coop, int i) {
 
 	std::cerr << " Node: " << coop << std::endl;
 	std::cerr << "estimate_processing_parameters: detTime=" << coop->detTime << "\tdescTime=" << coop->descTime << "\tNpix=" << coop->Npixels << "\tNkp=" << coop->Nkeypoints << "\n";
-	std::cerr << "estimate_processing_parameters: Pdpx=" << coop->Pdpx << "\tPdip=" << coop->Pdip << "\tPe=" << coop->Pe << "\n";
+	std::cerr << "estimate_processing_parameters: Pdpx=" << coop->Pdpx << "\tPdip=" << coop->Pdip << "\tPe=" << coop->Pe << "\tPm" << coop->Pm << "\n";
 	std::cerr << "estimate_processing_parameters: estimated Ptcoef= " << coop->Ptcoef << "\n";
 	std::cerr << "estimate_processing_parameters: processingTime= " << coop->processingTime << "\tNpix=" << coop->Npixels << "\tNkp=" << coop->Nkeypoints << "\n";
-	std::cerr << "txTime: " << coop->txTime << "\testimated Ctcoef: " << coop->Ctcoef << "sec/slide" << std::endl;
+	std::cerr << "txTime: " << coop->txTime << "\testimated Ctcoef: " << coop->Ctcoef << "sec/pixel" << std::endl;
 	std::cerr << "cooperator completion time:" << coop->completionTime << std::endl;
 	std::cerr << "idleTime + txTime + processingTime = " << coop->idleTime + coop->txTime + coop->processingTime  << std::endl;
 	
@@ -300,7 +302,7 @@ void OffloadingManager::estimate_parameters(cooperator* coop, int i) {
 			out.open("P4.txt", std::ios::app);	
 		else if(coop->id == 5)
 			out.open("P5.txt", std::ios::app);
-		out << coop->Ptcoef << " " << coop->Ctcoef << " " << coop->Npixels << " " << coop->Nkeypoints << " " << coop->idleTime << " " << coop->txTime << " " << coop->completionTime << " " << alpha_d << std::endl;
+		out << coop->Ptcoef << " " << coop->Ctcoef << " " << coop->Npixels << " " << coop->Npixelssubslices<< " " << coop->Nkeypoints << " Tidle: " << coop->idleTime << " Tx: " << coop->txTime << " Tm: " << coop->mergeTime << " Tp: " << coop->processingTime << " Tc: "<< coop->completionTime << " alpha: " << alpha_d << std::endl;
 		out.close();
 		
 }
@@ -311,7 +313,7 @@ void OffloadingManager::sortCooperators()
 }
 
 void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& features, Connection* cn,
-		double detTime, double descTime, double kencTime, double processingTime){
+		double detTime, double descTime, double mergeTime, double processingTime){
 
 	mut.lock();
 	features_buffer.push_back(features);
@@ -323,7 +325,7 @@ void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& feat
 				cooperatorList[i].completionTime = (getTickCount()-start_time)/getTickFrequency();
 				cooperatorList[i].detTime = detTime;
 				cooperatorList[i].descTime = descTime;
-				cooperatorList[i].kencTime = kencTime;
+				cooperatorList[i].mergeTime = mergeTime;
 				//cooperatorList[i].fencTime = fencTime;
 				cooperatorList[i].processingTime = processingTime;
 				//compensate for slicing if keypoints come from a cooperator
@@ -432,82 +434,104 @@ void OffloadingManager::transmitNextSlice(int i){
 	vector<int> param = vector<int>(2);
 	param[0] = CV_IMWRITE_JPEG_QUALITY;
 	param[1] = 70;
+	cooperatorList[i].Npixelssubslices = 0;
 	
 	vector<cooperator> cooperatorSlice;
 	cooperator opt;
 	int sub_slices_total = (int)ceil((cooperatorList[i].image_slice.cols)/(width_*overlap_));
-	//int sub_slices_total = ceil((float)(cooperatorList[i].image_slice.cols)/(float)(width_*overlap_));
-	
+
 	for(int j=0;j<sub_slices_total;j++){
 		cooperatorSlice.push_back(opt);
 	}
-	int sub_slice_id = 0;
 
 	int s1, s2, offset;
-		
-		if(i==0){ //first slice
-		
-			//First subslice
-			s1 = 0;
-			s2 = min(width_, (int)ceil(overlap_*width_));
-			cooperatorSlice[sub_slice_id].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
-			cooperatorSlice[sub_slice_id].col_offset = s1;
-			cooperatorSlice[sub_slice_id].Npixels = cooperatorSlice[i].image_slice.rows * cooperatorSlice[i].image_slice.cols;	
-			sub_slice_id++;
 
-			for(int j=1; j<sub_slices_total-1; j++){
-			//Middle subslices
-				s1 = max(0, (int)floor(j*overlap_*width_));
-				s2 = min(width_, (int)ceil((j+1)*overlap_*width_));
-				cooperatorSlice[sub_slice_id].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
-				cooperatorSlice[sub_slice_id].col_offset = s1;
-				cooperatorSlice[sub_slice_id].Npixels = cooperatorSlice[i].image_slice.rows * cooperatorSlice[i].image_slice.cols;
-				sub_slice_id++;
-			}
+/*
+	if(i==0){ //first slice
+
+		//First subslice
+		s1 = 0;
+		s2 = (int)ceil(overlap_*width_);
+		cooperatorSlice[0].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
+		cooperatorSlice[0].col_offset = s1;
+		cooperatorSlice[0].Npixels = cooperatorSlice[0].image_slice.rows * cooperatorSlice[0].image_slice.cols;
+
+		for(int j=1; j<sub_slices_total-1; j++){
+		//Middle subslices
+			s1 = (int)floor(j*overlap_*width_);
+			s2 = (int)ceil((j+1)*overlap_*width_);
+			cooperatorSlice[j].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
+			cooperatorSlice[j].col_offset = s1;
+			cooperatorSlice[j].Npixels = cooperatorSlice[i].image_slice.rows * cooperatorSlice[i].image_slice.cols;
 		}
-		else if(i!=0){ //no first slice
-		
-			//First subslice
-			//offset = max(0,(int)floor(cooperatorList[i-1].image_slice.cols-2*overlap_*width_));
-			s1 = 0;
-			s2 = min(width_, (int)ceil(overlap_*width_));
-			cooperatorSlice[sub_slice_id].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
-			cooperatorSlice[sub_slice_id].col_offset = s1;
-			cooperatorSlice[sub_slice_id].Npixels = cooperatorSlice[i].image_slice.rows * cooperatorSlice[i].image_slice.cols;
-			sub_slice_id++;
-			
-			for(int j=1; j<sub_slices_total-1; j++){
+	}
+	else if(i!=0){ //no first slice
+
+		//First subslice
+		//offset = max(0,(int)floor(cooperatorList[i-1].image_slice.cols-2*overlap_*width_));
+		s1 = (int)floor(cooperatorList[i-1].image_slice.cols-overlap_*width_);
+		s2 = cooperatorList[i-1].image_slice.cols;
+		cooperatorSlice[0].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
+		cooperatorSlice[0].col_offset = s1;
+		cooperatorSlice[0].Npixels = cooperatorSlice[0].image_slice.rows * cooperatorSlice[0].image_slice.cols;
+
+		for(int j=1; j<sub_slices_total-1; j++){
 			//Middle subslices
-				//offset = max(0, (int)floor(cooperatorList[i-1].image_slice.cols+(j-2)*overlap_*width_));
-				s1 = max(0, (int)floor(j*overlap_*width_));
-				s2 = min(width_, (int)ceil((j+1)*overlap_*width_));
-				cooperatorSlice[sub_slice_id].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
-				cooperatorSlice[sub_slice_id].col_offset = s1;
-				cooperatorSlice[sub_slice_id].Npixels = cooperatorSlice[i].image_slice.rows * cooperatorSlice[i].image_slice.cols;
-				sub_slice_id++;
+			//offset = max(0, (int)floor(cooperatorList[i-1].image_slice.cols+(j-2)*overlap_*width_));
+			s1 = (int)floor(cooperatorList[i-1].image_slice.cols+j*overlap_*width_);
+			s2 = (int)ceil(cooperatorList[i-1].image_slice.cols+(j+1)*overlap_*width_);
+			cooperatorSlice[j].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
+			cooperatorSlice[j].col_offset = s1;
+			cooperatorSlice[j].Npixels = cooperatorSlice[j].image_slice.rows * cooperatorSlice[j].image_slice.cols;
+
 			}
-		}
-		//Last subslice
-		s1 = max(0, (int)floor(cooperatorList[i].image_slice.cols-overlap_*width_));
-		s2 = cooperatorList[i].image_slice.cols;
-		cooperatorSlice[sub_slice_id].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
-		cooperatorSlice[sub_slice_id].col_offset = s1;
-		cooperatorSlice[sub_slice_id].Npixels = cooperatorSlice[i].image_slice.rows * cooperatorSlice[i].image_slice.cols;
+	}
+	//Last subslice
+	s1 = (int)floor(cooperatorList[i].image_slice.cols-overlap_*width_);
+	s2 = cooperatorList[i].image_slice.cols;
+	cooperatorSlice[sub_slices_total-1].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
+	cooperatorSlice[sub_slices_total-1].col_offset = s1;
+	cooperatorSlice[sub_slices_total-1].Npixels = cooperatorSlice[sub_slices_total-1].image_slice.rows * cooperatorSlice[sub_slices_total-1].image_slice.cols;
+*/
 			
-	
-	for(int j=0;j<sub_slices_total;j++){
+	//First subslice
+	s1 = 0;
+	s2 = min(width_, (int)ceil(overlap_*width_));
+	cooperatorSlice[0].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
+	cooperatorSlice[0].col_offset = s1;
+	cooperatorSlice[0].Npixels = cooperatorSlice[0].image_slice.rows * cooperatorSlice[0].image_slice.cols;
+
+	for(int j=1; j<sub_slices_total-1; j++){
+	//Middle subslices
+		s1 = max(0, (int)floor(j*overlap_*width_));
+		s2 = min(width_, (int)ceil((j+1)*overlap_*width_));
+		cooperatorSlice[j].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
+		cooperatorSlice[j].col_offset = s1;
+		cooperatorSlice[j].Npixels = cooperatorSlice[j].image_slice.rows * cooperatorSlice[j].image_slice.cols;
+	}
+	//Last subslice
+	s1 = max(0, (int)floor(cooperatorList[i].image_slice.cols-overlap_*width_));
+	s2 = cooperatorList[i].image_slice.cols;
+	cooperatorSlice[sub_slices_total-1].image_slice = Mat(cooperatorList[i].image_slice, Range(0,height_), Range(s1,s2)).clone();
+	cooperatorSlice[sub_slices_total-1].col_offset = s1;
+	cooperatorSlice[sub_slices_total-1].Npixels = cooperatorSlice[sub_slices_total-1].image_slice.rows * cooperatorSlice[sub_slices_total-1].image_slice.cols;
+
+
+	for(int z=0;z<sub_slices_total;z++){
 		
 		double enc_time = getTickCount();
 		if(COMPRESS_IMAGE == 1){
-			imencode(".jpg",cooperatorSlice[j].image_slice,bitstream,param);
+			imencode(".jpg",cooperatorSlice[z].image_slice,bitstream,param);
 		}else{
-			imencode(".bmp", cooperatorSlice[j].image_slice,bitstream);
+			imencode(".bmp", cooperatorSlice[z].image_slice,bitstream);
 		}
 		enc_time = (getTickCount()-enc_time)/getTickFrequency();
 		Coordinate_t top_left;
-		top_left.xCoordinate = cooperatorSlice[j].col_offset;
+		top_left.xCoordinate = cooperatorSlice[z].col_offset;
 		top_left.yCoordinate = 0;
 		
+		cooperatorList[i].Npixelssubslices +=cooperatorSlice[z].Npixels;
+
 		DataCTAMsg *msg = new DataCTAMsg(i,sub_slices_total,top_left,bitstream.size(),enc_time,0,bitstream);
 		//ALEXIS 11/12
 		msg->setSource(node_manager->node_id);

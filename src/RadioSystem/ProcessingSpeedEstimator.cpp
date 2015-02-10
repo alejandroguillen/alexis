@@ -17,20 +17,26 @@ ProcessingSpeedEstimator::ProcessingSpeedEstimator() {
 	num_processing_observations_=NUM_PROCESSING_OBSERVATIONS_DEFAULT;
 	ObsPosition=0;
 	Pe_ = 0;
+	Pm_ = 0;
 	Pe_exp_coef_ = PE_EXP_COEF_DEFAULT;
+	Pm_exp_coef_ = PM_EXP_COEF_DEFAULT;
 	pe_samples=0;
+	pm_samples=0;
 }
 
 ProcessingSpeedEstimator::ProcessingSpeedEstimator(
-		int num_processing_observations, float Pe_exp_coef) {
+		int num_processing_observations, float Pe_exp_coef, float Pm_exp_coef) {
 	num_processing_observations_=num_processing_observations;
 	ObsPosition=0;
 	Pe_ = 0;
 	Pe_exp_coef_ = Pe_exp_coef;
+	Pm_ = 0;
+	Pm_exp_coef_ = Pm_exp_coef;
 	pe_samples=0;
+	pm_samples=0;
 }
 
-int ProcessingSpeedEstimator::AddObservation(float Tdetect, float Textract,
+int ProcessingSpeedEstimator::AddObservation(float Tdetect, float Textract, float Tmerge,
 		int Npixels, int Nip) {
 	//Estimates the detection rate as a function of the number of pixels (Pdpx)
 	// and the detection rate as a function of the number of Interest Points (Pdip)
@@ -41,8 +47,17 @@ int ProcessingSpeedEstimator::AddObservation(float Tdetect, float Textract,
 	//We need at least two samples, with different Npixels and/or Nip to perform the Least-Squares fit
 	//If we don't, return -1
 	//If the fit is computed, return 0
-	//To get the values, getPdpx(), getPdip() and getPe().
+	//To get the values, getPdpx(), getPdip(), getPe() and getPm().
 
+	//EXPONENTIAL SMOOTH APPLIED: only one task is processed at the time, so these parameters do no change depending on the Nthreads (Ncameras)
+
+	//Pm:
+	if(pm_samples <= PM_TRAINING_PERIOD){ //Training period: Arithmetic smoothing
+		pm_samples++;
+		Pm_ = ((pm_samples-1)*Pm_ + Npixels/Tmerge)/pm_samples;
+	}else{ // Exponential smoothing
+		Pm_ = (1-Pm_exp_coef_)*Pm_ + Pm_exp_coef_*(Nip/Textract);
+	}
 
 	//Pe:
 	if(Nip > 0){
@@ -109,9 +124,9 @@ int ProcessingSpeedEstimator::AddObservation(float Tdetect, float Textract,
 	
 	//std::ifstream configfile(LB_CONFIG_FILE);
 
-	std::ofstream out("Pdpx-Pdip-Pe.txt", std::ios::app);
+	std::ofstream out("Pdpx-Pdip-Pe-Pm.txt", std::ios::app);
 
-	out << Pdpx_ << "		" << Pdip_ << "		" << Pe_ << std::endl;
+	out << "Num: " << ProcessObs_.size() << "	" << Pdpx_ << "		" << Pdip_ << "		" << Pe_ << "	" << Pm_ << std::endl;
 
 	out.close();
 	
@@ -128,4 +143,8 @@ float ProcessingSpeedEstimator::getPdip() {
 
 float ProcessingSpeedEstimator::getPe() {
 	return Pe_;
+}
+
+float ProcessingSpeedEstimator::getPm() {
+	return Pm_;
 }

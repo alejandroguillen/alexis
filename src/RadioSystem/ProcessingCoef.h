@@ -8,15 +8,15 @@
 #ifndef PROCESSINGCOEF_H_
 #define PROCESSINGCOEF_H_
 
-#define PT_EXP_COEF_DEFAULT 0.20
-#define PT_TRAINING_PERIOD 10
+#define PT_EXP_COEF_DEFAULT 0.10
+#define PT_TRAINING_PERIOD 20
 
 class ProcessingCoef {
 public:
 	ProcessingCoef();
 	ProcessingCoef(float Pt_exp_coef);
 	float getProcessingTimeCoef();
-	float setAlphad(float Pdpx, float Pdip, float Pe);
+	float setAlphad(float Pdpx, float Pdip, float Pe, float Pm);
 	float getAlphad();
 	void AddObservation(float processingtime, int Npixels, int Nip, double alphad);
 	void setOverlap(double overlap_normalized, bool double_overlap);

@@ -63,6 +63,11 @@ typedef struct cooperator{
 	
 	double alpha_d;
 
+	double Pm;
+	double mergeTime;
+
+	int Npixelssubslices;
+
 }cooperator;
 
 class OffloadingManager{

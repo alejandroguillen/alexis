@@ -35,6 +35,7 @@ typedef struct camera{
 	double Pe;
 	double detTime;
 	double descTime;
+	double mergeTime;
 	int kptsSize;
 
 	double detection_threshold;
@@ -65,7 +66,7 @@ typedef struct slices{
 	int kpts_size;
 	int features_size;
 	int col_offset;
-	double creationTime;
+	double mergeTime;
 	
 }slices;
 
@@ -139,7 +140,7 @@ private:
 
 	boost::mutex ACK_mutex;
 
-	double creationTime;
+	double mergeTime;
 		
 };
 

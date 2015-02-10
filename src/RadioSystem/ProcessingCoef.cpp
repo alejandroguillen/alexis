@@ -26,9 +26,11 @@ float ProcessingCoef::getProcessingTimeCoef() {
 	return Ptcoef;
 }
 
-float ProcessingCoef::setAlphad(float Pdpx, float Pdip, float Pe){
+float ProcessingCoef::setAlphad(float Pdpx, float Pdip, float Pe, float Pm){
 
-	float alpha_d = Pdpx*((1/Pdip) + (1/Pe)); // (pixels/keypoints)
+	//the dividend part of the Pcoef has to be the minimum possible, so alphad->0 => deleting Pm parameter
+	//float alpha_d = (Pdpx+Pm)*((1/Pdip) + (1/Pe)); // (pixels/keypoints)
+	float alpha_d = (Pdpx)*((1/Pdip) + (1/Pe)); // (pixels/keypoints)
 	alpha_d_ = alpha_d;
 	return alpha_d;
 }
@@ -48,15 +50,20 @@ void ProcessingCoef::setOverlap(double overlap_normalized, bool double_overlap){
 void ProcessingCoef::AddObservation(float processingTime, int Npixels, int Nip, double alphad) {
 
 	//Npixels = PixelsSlicetoCompute + PixelsOverlap
-	float processingtcoeff = processingTime/(Npixels-overlapNpixels + alphad*Nip); // seconds/pixels (seconds/image)
+	//float processingtcoeff = processingTime/(Npixels-overlapNpixels + alphad*Nip); // seconds/pixels (seconds/image)
+	//we have to calculate all the pixels that arrive at the Coop, because all the subslices (including overlap) are calculated (not to compute though)
+	float processingtcoeff = processingTime/(Npixels + alphad*Nip);
 
+	/*NO EXPONENTIAL SMOOTH APPLIED: the Pcoeff can change due to Nthreads (Ncameras)
 	if(pt_samples <= PT_TRAINING_PERIOD){ //Training period: Arithmetic smoothing
 		pt_samples++;
 		Ptcoef = ((pt_samples-1)*Ptcoef + processingtcoeff)/pt_samples;
 	}else{ // Exponential smoothing
 		Ptcoef = (1-Pt_exp_coef_)*Ptcoef + Pt_exp_coef_*processingtcoeff;
 	}
-	//Ptcoef = processingtcoeff;
+	*/
+	Ptcoef = processingtcoeff;
+
 		/*std::ofstream out("Ptcoef.txt");
 		std::streambuf *cerrbuf = std::cerr.rdbuf();
 		std::cerr.rdbuf(out.rdbuf());

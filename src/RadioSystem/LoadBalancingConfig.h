@@ -13,8 +13,8 @@
 class LoadBalancingConfig {
 public:
 	LoadBalancingConfig();
-	LoadBalancingConfig(int _reconstruction_method, float _bdr_update_coef, float _fdr_update_coef, float _scaling_coef, int _num_quantiles, float _solver_timeout, double _alpha_d);
-	LoadBalancingConfig(int _reconstruction_method, float _bdr_update_coef, float _fdr_update_coef, float _scaling_coef, int _num_quantiles, float _solver_timeout, int _use_fixed_uniform_cuts, double _alpha_d);
+	LoadBalancingConfig(int _reconstruction_method, float _bdr_update_coef, float _fdr_update_coef, float _scaling_coef, int _num_quantiles, float _solver_timeout, double _alpha_d, int _training_period);
+	LoadBalancingConfig(int _reconstruction_method, float _bdr_update_coef, float _fdr_update_coef, float _scaling_coef, int _num_quantiles, float _solver_timeout, int _use_fixed_uniform_cuts, double _alpha_d, int _training_period);
 	int ParseConfigFile(std::string path);
 
 	int reconstruction_method;
@@ -27,6 +27,7 @@ public:
 	int use_fixed_uniform_cuts;
 	
 	double alpha_d;
+	int training_period;
 
 private:
 	std::string ReadIdentifier(std::ifstream* fid);

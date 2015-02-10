@@ -96,7 +96,7 @@ public:
 	
 	void Processing_slice(int processingID, int subslices_iteration, Mat slice, double detection_threshold, int max_features);
 	void TransmissionFinished(int i, Connection* c);
-	void notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& features, double detTime, double descTime, double processingTime, Connection* c);
+	void notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& features, double detTime, double descTime, double mergeTime, double processingTime, Connection* c);
 
 	private:
 	SystemState cur_state;

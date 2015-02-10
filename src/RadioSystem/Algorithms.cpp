@@ -24,6 +24,7 @@ Algorithms::Algorithms() {
 	lp_D=NULL;
 	lp_G=NULL;
 	lp_E=NULL;
+	training_period=0;
 
 	//Default configuration:
 	reconstruction_method_=RECONSTRUCTION_METHOD_DEFAULT;
@@ -37,6 +38,8 @@ Algorithms::Algorithms() {
 	use_fixed_uniform_cuts_=USE_FIXED_UNIFORM_CUTS_DEFAULT;
 	
 	alpha_d_ = ALPHA_D_DEFAULT;
+
+	training_period_ = TRAINING_PERIOD_DEFAULT;
 
 	//Try to read config file in "LoadBalancing_config.txt":
 	std::ifstream configfile(LB_CONFIG_FILE);
@@ -56,6 +59,7 @@ Algorithms::Algorithms(LoadBalancingConfig config) {
 	lp_D=NULL;
 	lp_G=NULL;
 	lp_E=NULL;
+	training_period=0;
 
 	//Get config from 'config':
 	reconstruction_method_=config.reconstruction_method;
@@ -69,6 +73,8 @@ Algorithms::Algorithms(LoadBalancingConfig config) {
 	use_fixed_uniform_cuts_=config.use_fixed_uniform_cuts;
 	
 	alpha_d_ = config.alpha_d;
+
+	training_period_ = config.training_period;
 }
 
 void Algorithms::LoadNewConfig(LoadBalancingConfig config) {
@@ -84,6 +90,7 @@ void Algorithms::LoadNewConfig(LoadBalancingConfig config) {
 
 	use_fixed_uniform_cuts_=config.use_fixed_uniform_cuts;
 	alpha_d_ = config.alpha_d;
+	training_period_ = config.training_period;
 }
 
 void Algorithms::SetImageParameters(int width, int height, double overlap) {
@@ -206,10 +213,20 @@ void Algorithms::CutVectorOptimization(int num_cooperators,
 	if(num_cooperators == 1){
 		optimal_cutvector_.resize(1);
 		optimal_cutvector_[0] = width_;
-		//T = C*h*overlap + P(hw + alphad*Nip)
-		est_completion_time_=c[0]*height_*width_*overlap_ + p[0]*(height_*width_ + alphad[0]*Mopt_);
+		//T = C*h*2*overlap + P(hw + alphad*Nip)
+		est_completion_time_=c[0]*height_*width_*2*overlap_ + p[0]*(height_*width_ + alphad[0]*Mopt_);
 	}
 	else{
+
+		//training period to check links
+		if(training_period < training_period_){
+			training_period++;
+			optimal_cutvector_.resize(num_cooperators);
+			for(int i=0; i<num_cooperators; i++){
+				optimal_cutvector_[i] = round(width_*(i+1)/num_cooperators);
+			}
+			return;
+		}
 		if(use_fixed_uniform_cuts_ == 1){
 			optimal_cutvector_.resize(num_cooperators);
 			for(int i=0; i<num_cooperators; i++){

@@ -42,6 +42,7 @@ ProcessingManager::ProcessingManager(NodeManager* nm, int i){
 		encoder = new VisualFeatureEncoding();
 		*/
 		processingTime =0;
+		mergeTime = 0;
 		processcond = false;
 		processempty=true;
 		node_manager = nm;
@@ -58,8 +59,6 @@ ProcessingManager::ProcessingManager(NodeManager* nm, int i){
 
 		subslices_iteration = 0;
 		count_subslices=0;
-
-		creationTime = getTickCount();
 
 		p_thread = boost::thread(&ProcessingManager::Processing_thread_cooperator, this, i);
 
@@ -161,7 +160,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 	temp_slice.last_subslices_iteration = false;
 	int z= subsliceList.size();
 
-	double notprocessingTime = getTickCount();
+	mergeTime = getTickCount();
 
 	//ONE COOP only
 	if(cameraList.slice_id == 1 && cameraList.slice_id == cameraList.slices_total)
@@ -182,7 +181,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 		
 			temp_slice.id = subslices_iteration;
 			temp_slice.col_offset = col_offset;
-			temp_slice.creationTime = (getTickCount()-creationTime)/getTickFrequency();
+			temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 			sliceList.push_back(temp_slice);
 			return slicedone;
 		}
@@ -212,7 +211,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 
 			temp_slice.id = subslices_iteration;
 			temp_slice.col_offset = col_offset;
-			temp_slice.creationTime = (getTickCount()-creationTime)/getTickFrequency();
+			temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 			sliceList.push_back(temp_slice);
 			return slicedone;
 		}
@@ -234,7 +233,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 			temp_slice.id = subslices_iteration;
 			temp_slice.col_offset = col_offset;
 			temp_slice.last_subslices_iteration = true;	
-			temp_slice.creationTime = (getTickCount()-creationTime)/getTickFrequency();
+			temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 			sliceList.push_back(temp_slice);
 			return slicedone;
 		}
@@ -261,7 +260,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 			if(subslices_iteration == cameraList.sub_slices_total-1){
 				temp_slice.last_subslices_iteration = true;
 			}
-			temp_slice.creationTime = (getTickCount()-creationTime)/getTickFrequency();
+			temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 			sliceList.push_back(temp_slice);
 			return slicedone;
 		}
@@ -296,7 +295,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 			if(j == cameraList.sub_slices_total-1){
 				temp_slice.last_subslices_iteration = true;
 			}
-			temp_slice.creationTime = (getTickCount()-creationTime)/getTickFrequency();
+			temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 			sliceList.push_back(temp_slice);
 			return slicedone;
 		}
@@ -329,7 +328,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 
 				temp_slice.id = subslices_iteration;
 				temp_slice.col_offset = col_offset; 
-				temp_slice.creationTime = (getTickCount()-creationTime)/getTickFrequency();
+				temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 				sliceList.push_back(temp_slice);
 				return slicedone;
 			}
@@ -352,7 +351,7 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 				temp_slice.col_offset = col_offset;
 				temp_slice.last_subslices_iteration = true;	
 				cerr << "last subslice" << endl;
-				temp_slice.creationTime = (getTickCount()-creationTime)/getTickFrequency();
+				temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 				sliceList.push_back(temp_slice);
 				return slicedone;
 			}
@@ -379,9 +378,10 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 		//merge subslices to a slice
 		int f = subsliceListsave.size();
 		cerr << "3 available: " << f << " slices //////////////////////////////////////////////////////// in " << i+1 << endl;
-		cerr << "subslices_iteratoion:" << subslices_iteration << "	slice id "<< cameraList.slice_id << "	subslice total: "<< cameraList.sub_slices_total << endl;
+		cerr << "subslices_iteration:" << subslices_iteration << "	slice id "<< cameraList.slice_id << "	subslice total: "<< cameraList.sub_slices_total << endl;
+		mergeTime = getTickCount();
 		Mat slice_merged = mergeSubSlices(subslices_iteration,subsliceListsave);
-		
+		mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 		//start processing timer
 		if(subslices_iteration==1){
 			processingTime = getTickCount();
@@ -401,16 +401,18 @@ void ProcessingManager::Processing_thread_cooperator(int i){
 void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration_,vector<KeyPoint>& kpts,Mat& features,
 		double detTime, double descTime){
 
+	int i = subslices_iteration_-1;
+
 	//save features
 	features_buffer.push_back(features);
 	
 	//sum parameters
 	cameraList.detTime += detTime;
 	cameraList.descTime += descTime;
+	cameraList.mergeTime += sliceList[i].mergeTime;
 	cameraList.kptsSize += kpts.size();
 	
 	//save keypoints
-	int i = subslices_iteration_-1;	
 	for(int j=0;j<kpts.size();j++){
 		kpts[j].pt.x = kpts[j].pt.x + sliceList[i].col_offset;
 		keypoint_buffer.push_back(kpts[j]);
@@ -423,7 +425,7 @@ void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration_,vecto
 		processingTime = (getTickCount()-processingTime)/getTickFrequency();
 			
 			int check_id, check_col_offset;
-			double check_creationTime;
+			double check_mergeTime;
 
 			std::ofstream out;
 			if(node_manager->node_id == 3)
@@ -435,8 +437,8 @@ void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration_,vecto
 			for(int g=0;g<sliceList.size();g++){
 				check_id = sliceList[g].id;
 				check_col_offset = sliceList[g].col_offset;
-				check_creationTime = sliceList[g].creationTime;
-				out << check_id << "	" << check_col_offset << "	" << check_creationTime << endl;
+				check_mergeTime = sliceList[g].mergeTime;
+				out << check_id << "	" << check_col_offset << "	" << check_mergeTime << endl;
 			}
 			out << "-----------------------" << endl;
 			out.close();
@@ -458,8 +460,8 @@ void ProcessingManager::storeKeypointsAndFeatures(int subslices_iteration_,vecto
 		processcond = false;
 
 		//encode kpts/features and send DataATCmsg to Camera
-		node_manager->notifyCooperatorCompleted(cameraList.id,keypoint_buffer,features_buffer,cameraList.detTime,cameraList.descTime, processingTime, cameraList.connection);
-		creationTime = getTickCount();
+		node_manager->notifyCooperatorCompleted(cameraList.id,keypoint_buffer,features_buffer,cameraList.detTime,cameraList.descTime, cameraList.mergeTime, processingTime, cameraList.connection);
+
 		features_buffer.release();
 		keypoint_buffer.clear();
 

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+
+#send the files
+sudo scp -r P3.txt alexis@10.0.0.1:/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/
+sudo scp -r P4.txt alexis@10.0.0.1:/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/
+sudo scp -r P5.txt alexis@10.0.0.1:/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/
+sudo scp -r completionTimeGlobalC1.txt alexis@10.0.0.1:/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/
+sudo scp -r Pdpx-Pdip-Pe-Pm.txt alexis@10.0.0.1:/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/
+
+
+#delete the files
+sudo rm P3.txt
+sudo rm P4.txt
+sudo rm P5.txt
+sudo rm completionTimeGlobalC1.txt
+sudo rm Pdpx-Pdip-Pe-Pm.txt
