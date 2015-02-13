@@ -516,7 +516,6 @@ void OffloadingManager::transmitNextSlice(int i){
 	cooperatorSlice[sub_slices_total-1].col_offset = s1;
 	cooperatorSlice[sub_slices_total-1].Npixels = cooperatorSlice[sub_slices_total-1].image_slice.rows * cooperatorSlice[sub_slices_total-1].image_slice.cols;
 
-
 	for(int z=0;z<sub_slices_total;z++){
 		
 		double enc_time = getTickCount();

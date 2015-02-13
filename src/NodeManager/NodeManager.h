@@ -146,6 +146,9 @@ public:
 	vector<bool> firstprocess;
 	vector<int> countsubslices;
 
+	VideoCapture *capture;
+	int count_frame;
+
 };
 
 #endif

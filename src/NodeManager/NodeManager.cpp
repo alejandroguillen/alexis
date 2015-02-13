@@ -31,6 +31,11 @@ NodeManager::NodeManager(NodeType nt, string ID){
 		imgAcq = new ImageAcquisition(0);
 		//imgAcq = new ImageAcquisition(0,1024,768);
 
+		capture = new VideoCapture("util/sample_VIDEO_hearts.avi");
+		double count = capture->get(CV_CAP_PROP_FRAME_COUNT);
+		count_frame=0;
+
+
 		BRISK_detParams detPrms(60,4);
 		BRISK_descParams dscPrms;
 
@@ -699,7 +704,19 @@ void NodeManager::DATC_processing_thread(){
 	cout << "NM: ended acquire_image_task" << endl;
 	Mat image = ((AcquireImageTask*)cur_task)->getImage();
 	delete((AcquireImageTask*)cur_task);
-	frame_id++;
+	/*
+	Mat image;
+	capture->set(CV_CAP_PROP_POS_FRAMES,count_frame);
+	capture->read(image);
+	count_frame++;
+	*/
+
+	/*
+	namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
+	imshow( "Display window", image );                   // Show our image inside it.
+
+	waitKey(0);                                          // Wait for a keystroke in the window
+	*/
 
 	// Convert to gray-scale
 	cur_task = new ConvertColorspaceTask(image,0);
@@ -1137,8 +1154,7 @@ void NodeManager::Processing_slice(int processingID, int subslices_iteration, Ma
 	//boost::mutex monitor;
 	//boost::mutex::scoped_lock lk(monitor);
 	Task *cur_task;
-	
-	//Mat slice = slices;
+
 
 	/*//Merge subslices
 	cur_task = new MergeSubSlicesTask(subslices_iteration,subsliceList);
@@ -1152,9 +1168,11 @@ void NodeManager::Processing_slice(int processingID, int subslices_iteration, Ma
 	delete((MergeSubSlicesTask*)cur_task);
 	*/
 	
-	//namedWindow( "Display window", WINDOW_AUTOSIZE );	// Create a window for display.
-	//imshow( "Display window", slice );                   // Show our image inside it.
-	//waitKey(0);                                          // Wait for a keystroke in the window*/
+	/*
+	namedWindow( "Display window", WINDOW_AUTOSIZE );	// Create a window for display.
+	imshow( "Display window", slice );                   // Show our image inside it.
+	waitKey(0);                                          // Wait for a keystroke in the window
+	*/
 
 	// Extract the keypoints
 	cur_task = new ExtractKeypointsTask(extractor,slice,detection_threshold);
