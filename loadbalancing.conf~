@@ -1,0 +1,10 @@
+reconstruction_method=backward
+bdr_update_coef=0.1
+fdr_update_coef=0.1
+scaling_coef=0.9
+num_quantiles=10
+solver_timeout=5
+use_fixed_uniform_cuts=fasle
+uniform_IP_distribution=false
+training_period=10
+END

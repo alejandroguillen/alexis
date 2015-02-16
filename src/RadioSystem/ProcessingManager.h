@@ -10,13 +10,13 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include "NodeManager/NodeManager.h"
-#include "Algorithms.h"
 #include "ProcessingSpeedEstimator.h"
 #include "TxSpeedEstimator.h"
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <RadioSystem/LoadBalancing.h>
 
 using namespace std;
 using namespace cv;

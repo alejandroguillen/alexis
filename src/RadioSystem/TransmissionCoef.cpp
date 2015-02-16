@@ -19,19 +19,21 @@ TransmissionCoef::TransmissionCoef(float tx_exp_coef) {
 	training_samples=0;
 }
 
-float TransmissionCoef::getTransmissionTimeCoef() {
+double TransmissionCoef::getTransmissionTimeCoef() {
 	return Ctcoef;
 }
 
-void TransmissionCoef::AddObservation(float txtime, int Npixels) {
+void TransmissionCoef::AddObservation(double txtime, int Npixels) {
 	double transmissiontcoeff= txtime/Npixels; // seconds/pixel (seconds/image)
 
 	//EXPONENTIAL SMOOTH APPLIED: due to Ctcoef can not change too much during the connection (not change position)
+	//but before settle down, can change due to the different assignments of the cameras
 	if(training_samples <= TX_TRAINING_PERIOD){ //Training period: Arithmetic smoothing
 		training_samples++;
 		Ctcoef = ((training_samples-1)*Ctcoef + transmissiontcoeff)/training_samples;
 	}else{ // Exponential smoothing
-		Ctcoef = (1-tx_exp_coef_)*Ctcoef + tx_exp_coef_*transmissiontcoeff;
+		//Ctcoef = (1-tx_exp_coef_)*Ctcoef + tx_exp_coef_*transmissiontcoeff;
+		Ctcoef = transmissiontcoeff;
 	}
 
 }

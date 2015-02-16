@@ -15,8 +15,8 @@ class TransmissionCoef {
 public:
 	TransmissionCoef();
 	TransmissionCoef(float tx_exp_coef);
-	float getTransmissionTimeCoef();
-	void AddObservation(float txtime, int Npixels);
+	double getTransmissionTimeCoef();
+	void AddObservation(double txtime, int Npixels);
 private:
 	double Ctcoef;
 	int training_samples;

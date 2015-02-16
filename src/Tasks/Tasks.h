@@ -35,6 +35,7 @@ enum taskType {ACQUIRE_IMAGE_TASK,
 	TRANSMIT_LOADS_TASK,
 	//MERGE_SUBSLICES_TASK,
 	SIMULATION_TASK,
+	ACQUIRE_FRAME_TASK,
 };
 
 class OffloadingManager;
@@ -60,6 +61,24 @@ public:
 		imgAcq = imgAcq_; // the imageAcquisition object
 		type = ACQUIRE_IMAGE_TASK;
 		completed = false;
+	}
+	void execute();
+	Mat getImage(){
+		return image;
+	}
+};
+
+class AcquireFrameTask : public Task{
+private:
+	ImageAcquisition *imgAcq;
+	Mat image;
+	int i;
+public:
+	AcquireFrameTask(ImageAcquisition *imgAcq_,int i_){
+		imgAcq = imgAcq_; // the imageAcquisition object
+		type = ACQUIRE_FRAME_TASK;
+		completed = false;
+		i = i_;
 	}
 	void execute();
 	Mat getImage(){

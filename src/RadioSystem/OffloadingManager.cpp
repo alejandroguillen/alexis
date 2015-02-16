@@ -78,26 +78,26 @@ Mat OffloadingManager::computeLoads(Mat& image){
 		p.push_back(cooperatorList[i].Ptcoef);
 		alphad.push_back(cooperatorList[i].alpha_d);
 	}
-	
+	frame++;
 	//double overlap = OVERLAP;
 	double overlap = (double)168.0/(2*image.cols);
 	overlap_normalized = image.cols*image.rows*overlap;
-	algorithms.SetImageParameters(image.cols, image.rows, overlap);
+	loadbalancing.SetImageParameters(image.cols, image.rows, overlap);
 	width_=image.cols;
 	height_=image.rows;
 	overlap_=overlap;
 	
 	//Solve:
 	double lpsolveTime = getTickCount();
-	algorithms.CutVectorOptimization(cooperators_to_use, c, p, alphad);
+	loadbalancing.CutVectorOptimization(cooperators_to_use, c, p, alphad);
 	lpsolveTime = (getTickCount()-lpsolveTime)/getTickFrequency();
 	std::cerr << "lpsolveTime = " << lpsolveTime << "sec\n";
-	vector<int> cutvector = algorithms.getCutVector();
+	vector<int> cutvector = loadbalancing.getCutVector();
 
 	for(size_t j=0; j<cutvector.size(); j++){
 		std::cerr << "cutvector: " << cutvector[j] << std::endl;
 	}
-	std::cerr << "Estimated completion time: " << algorithms.getCompletionTime() << "sec\n";
+	std::cerr << "Estimated completion time: " << loadbalancing.getCompletionTime() << "sec\n";
 
 	//if cuts=0, have to use less cooperators
 	while(cutvector[0] == 0){
@@ -159,7 +159,7 @@ void OffloadingManager::transmitStartDATC(StartDATCMsg* msg){
 	if(next_detection_threshold==0){
 		//First frame, use INITIAL_DETECTION_THRESHOLD
 		next_detection_threshold = INITIAL_DETECTION_THRESHOLD;
-		algorithms.setInitialDetectionThreshold(INITIAL_DETECTION_THRESHOLD);
+		loadbalancing.setInitialDetectionThreshold(INITIAL_DETECTION_THRESHOLD);
 	}
 	msg->setDetectorThreshold(next_detection_threshold);
 	msg->setMaxNumFeat(400*1.1); //ALEXIS SIMULATION 03/02
@@ -241,7 +241,7 @@ void OffloadingManager::createOffloadingTask(int num_cooperators, int target_num
 	cooperators_to_use = num_cooperators;
 	features_buffer.release();
 	keypoint_buffer.clear();
-	algorithms.SetTargetKeypoints(target_num_keypoints);
+	loadbalancing.SetTargetKeypoints(target_num_keypoints);
 
 	//here we should start a timer that will check if data is received from all cooperators
 	//if it expires, it should notify the node_manager anyway to prevent deadlocks.
@@ -271,6 +271,7 @@ void OffloadingManager::estimate_parameters(cooperator* coop, int i) {
 	coop->transmission_time_coef->AddObservation(coop->txTime, coop->Npixels);
 	coop->Ctcoef = coop->transmission_time_coef->getTransmissionTimeCoef();
 	//coop->bandwidth = 8*coop->Npixels/coop->txTime; //FIXME Only for bmp encoding, 8bits per pixel
+	double coopbandwitdh = (8*1.0/coop->Ctcoef);
 
 
 	//Processing time Coef
@@ -302,7 +303,7 @@ void OffloadingManager::estimate_parameters(cooperator* coop, int i) {
 			out.open("P4.txt", std::ios::app);	
 		else if(coop->id == 5)
 			out.open("P5.txt", std::ios::app);
-		out << coop->Ptcoef << " " << coop->Ctcoef << " " << coop->Npixels << " " << coop->Npixelssubslices<< " " << coop->Nkeypoints << " Tidle: " << coop->idleTime << " Tx: " << coop->txTime << " Tm: " << coop->mergeTime << " Tp: " << coop->processingTime << " Tc: "<< coop->completionTime << " alpha: " << alpha_d << std::endl;
+		out << frame << "" << coop->Ptcoef << " " << coop->Ctcoef << " " << coopbandwitdh << " "  << coop->Npixels << " " << coop->Npixelssubslices<< " " << coop->Nkeypoints << " Tidle: " << coop->idleTime << " Tx: " << coop->txTime << " Tm: " << coop->mergeTime << " Tp: " << coop->processingTime << " Tc: "<< coop->completionTime << " alpha: " << alpha_d << std::endl;
 		out.close();
 		
 }
@@ -360,25 +361,25 @@ void OffloadingManager::addKeypointsAndFeatures(vector<KeyPoint>& kpts,Mat& feat
 		cerr << "start timer: " << completionTimeGlobal << " ticks ///////////////////////////////////////////////////////////" <<endl;
 		std::cerr << "Total Completion Time: " << completionTimeGlobal << "\n";
 		
-		vector<int> cutvector = algorithms.getCutVector();
+		vector<int> cutvector = loadbalancing.getCutVector();
 
 		std::ofstream out;
 			if(node_manager->node_id == 1)
 				out.open("completionTimeGlobalC1.txt", std::ios::app);
 			else
 				out.open("completionTimeGlobalC2.txt", std::ios::app);
-			out << "Real: "<< completionTimeGlobal << "	Estimated: "<< algorithms.getCompletionTime() << "	";
+			out << completionTimeGlobal << "	"<< loadbalancing.getCompletionTime();
 			for(size_t j=0; j<cutvector.size(); j++){
-				out << " "<< cooperatorList[j].id << " -> cut: " << cutvector[j] << " ";
+				out << " " << cooperatorList[j].id << " " << cutvector[j] << " ";
 			}
 			out << std::endl;
 			out.close();
 			
 		t.cancel();
 
-		algorithms.AddKeypoints(keypoint_buffer);
+		loadbalancing.AddKeypoints(keypoint_buffer);
 		//get next detection threshold
-		next_detection_threshold = algorithms.GetNextDetectionThreshold();
+		next_detection_threshold = loadbalancing.GetNextDetectionThreshold();
 
 std::cerr << "Next detection threshold: " << next_detection_threshold << "\n";
 std::cerr << "Added " << keypoint_buffer.size() << " keypoints\n";

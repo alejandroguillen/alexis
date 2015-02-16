@@ -10,11 +10,11 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include "NodeManager/NodeManager.h"
-#include "Algorithms.h"
 #include "ProcessingSpeedEstimator.h"
 #include "TxSpeedEstimator.h"
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <RadioSystem/LoadBalancing.h>
 #include "ProcessingCoef.h"
 #include "TransmissionCoef.h"
 
@@ -81,6 +81,7 @@ public:
 		received_cooperators = 0;
 		node_manager = nm;
 		next_detection_threshold = 0;
+		frame=0;
 		startTimer();
 	}
 
@@ -125,7 +126,7 @@ private:
 
 	double camDetTime, camDescTime, camkEncTime, camfEncTime;
 
-	Algorithms algorithms;
+	LoadBalancing loadbalancing;
 	double next_detection_threshold;
 	double start_time;
 	double start_time_global;
@@ -149,6 +150,8 @@ private:
 	double overlap_normalized;
 
 	vector<int> asignmentvector;
+
+	int frame;
 
 };
 

@@ -126,7 +126,7 @@ int ProcessingSpeedEstimator::AddObservation(float Tdetect, float Textract, floa
 
 	std::ofstream out("Pdpx-Pdip-Pe-Pm.txt", std::ios::app);
 
-	out << "Num: " << ProcessObs_.size() << "	" << Pdpx_ << "		" << Pdip_ << "		" << Pe_ << "	" << Pm_ << std::endl;
+	out << ProcessObs_.size() << "	" << Pdpx_ << "		" << Pdip_ << "		" << Pe_ << "	" << Pm_ << std::endl;
 
 	out.close();
 	

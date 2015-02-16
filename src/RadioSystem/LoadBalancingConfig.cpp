@@ -13,7 +13,7 @@
 
 LoadBalancingConfig::LoadBalancingConfig(int _reconstruction_method,
 		float _bdr_update_coef, float _fdr_update_coef, float _scaling_coef,
-		int _num_quantiles, float _solver_timeout, double _alpha_d, int _training_period) {
+		int _num_quantiles, float _solver_timeout, bool _u_d_alpha_d, int _training_period) {
 	reconstruction_method=_reconstruction_method;
 	bdr_update_coef=_bdr_update_coef;
 	fdr_update_coef=_fdr_update_coef;
@@ -22,14 +22,14 @@ LoadBalancingConfig::LoadBalancingConfig(int _reconstruction_method,
 	num_quantiles=_num_quantiles;
 	solver_timeout=_solver_timeout;
 	use_fixed_uniform_cuts=0;
-	alpha_d=_alpha_d;
+	u_d_alpha_d=_u_d_alpha_d;
 	training_period=_training_period;
 }
 
 LoadBalancingConfig::LoadBalancingConfig(int _reconstruction_method,
 		float _bdr_update_coef, float _fdr_update_coef, float _scaling_coef,
 		int _num_quantiles, float _solver_timeout,
-		int _use_fixed_uniform_cuts, double _alpha_d, int _training_period) {
+		int _use_fixed_uniform_cuts, bool _u_d_alpha_d, int _training_period) {
 	reconstruction_method=_reconstruction_method;
 	bdr_update_coef=_bdr_update_coef;
 	fdr_update_coef=_fdr_update_coef;
@@ -38,7 +38,7 @@ LoadBalancingConfig::LoadBalancingConfig(int _reconstruction_method,
 	num_quantiles=_num_quantiles;
 	solver_timeout=_solver_timeout;
 	use_fixed_uniform_cuts=_use_fixed_uniform_cuts;
-	alpha_d=_alpha_d;
+	u_d_alpha_d=_u_d_alpha_d;
 	training_period=_training_period;
 }
 
@@ -90,8 +90,13 @@ int LoadBalancingConfig::ParseConfigFile(std::string path){
 				use_fixed_uniform_cuts = 0;
 			}
 		}
-		else if(strcmp(identifier.c_str(), "alpha_d") == 0){
-			alpha_d = atoi(value.c_str());
+		else if(strcmp(identifier.c_str(), "uniform_IP_distribution") == 0){
+			if(strcmp(value.c_str(), "true") == 0){
+				u_d_alpha_d = 1;
+			}
+			else{
+				u_d_alpha_d = 0;
+			}
 		}
 		else if(strcmp(identifier.c_str(), "training_period") == 0){
 			training_period = atoi(value.c_str());

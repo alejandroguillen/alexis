@@ -16,9 +16,24 @@ void AcquireImageTask::execute(){
 	cout << "executing the acquire_image_task" << endl;
 	//imgAcq->takePicture(image);
 	//image = imread("util/sample_VGA_1.jpg");
-	image = imread("util/sample_VGA_3.jpg");
+	image = imread("util/sample_VGA_2.jpg");
 
 	cout << "ok!" << endl;
+	boost::mutex::scoped_lock lk(task_monitor);
+
+	cout << "TM: task executed" << endl;
+	completed = true;
+}
+
+void AcquireFrameTask::execute(){
+	cout << "executing the acquire_frame_task" << endl;
+
+	char name[50];
+	sprintf(name,"util/videos/camera1/1pictures%d.jpg",i);
+
+	image=imread(name);
+
+	cout << "frame "<< i <<" ok!" << endl;
 	boost::mutex::scoped_lock lk(task_monitor);
 
 	cout << "TM: task executed" << endl;

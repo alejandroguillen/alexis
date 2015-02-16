@@ -31,8 +31,11 @@ NodeManager::NodeManager(NodeType nt, string ID){
 		imgAcq = new ImageAcquisition(0);
 		//imgAcq = new ImageAcquisition(0,1024,768);
 
+		/*
 		capture = new VideoCapture("util/sample_VIDEO_hearts.avi");
 		double count = capture->get(CV_CAP_PROP_FRAME_COUNT);
+		cout << "NM: " << count << " Nframes total"<< endl;
+		*/
 		count_frame=0;
 
 
@@ -428,7 +431,7 @@ void NodeManager::notify_msg(Message *msg){
 
 int NodeManager::notify_endTask(){
 	cout << "NM: a end-task notification has been received" << endl;
-	cur_task_finished.notify_all();
+	cur_task_finished.notify_all(); /////////change whether is Coop (all) or Camera (one)
 
 	return 0;
 }
@@ -693,8 +696,9 @@ void NodeManager::DATC_processing_thread(){
 	boost::mutex::scoped_lock lk(monitor);
 	Task *cur_task;
 
-
+	count_frame++;
 	// Acquire the image
+	//cur_task = new AcquireFrameTask(imgAcq,count_frame);
 	cur_task = new AcquireImageTask(imgAcq);
 	taskManager_ptr->addTask(cur_task);
 	//cout << "NM: Waiting the end of the acquire_image_task" << endl;
@@ -704,6 +708,8 @@ void NodeManager::DATC_processing_thread(){
 	cout << "NM: ended acquire_image_task" << endl;
 	Mat image = ((AcquireImageTask*)cur_task)->getImage();
 	delete((AcquireImageTask*)cur_task);
+
+
 	/*
 	Mat image;
 	capture->set(CV_CAP_PROP_POS_FRAMES,count_frame);
@@ -711,12 +717,12 @@ void NodeManager::DATC_processing_thread(){
 	count_frame++;
 	*/
 
-	/*
+
 	namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
 	imshow( "Display window", image );                   // Show our image inside it.
 
 	waitKey(0);                                          // Wait for a keystroke in the window
-	*/
+
 
 	// Convert to gray-scale
 	cur_task = new ConvertColorspaceTask(image,0);
@@ -1167,11 +1173,16 @@ void NodeManager::Processing_slice(int processingID, int subslices_iteration, Ma
 	Mat slice = ((MergeSubSlicesTask*)cur_task)->getMySlice();
 	delete((MergeSubSlicesTask*)cur_task);
 	*/
-	
 	/*
-	namedWindow( "Display window", WINDOW_AUTOSIZE );	// Create a window for display.
-	imshow( "Display window", slice );                   // Show our image inside it.
-	waitKey(0);                                          // Wait for a keystroke in the window
+	if(processingID==1){
+		namedWindow( "Display window 1", WINDOW_AUTOSIZE );	// Create a window for display.
+		imshow( "Display window 1", slice );                   // Show our image inside it.
+		waitKey(0);                                          // Wait for a keystroke in the window
+	}else{
+		namedWindow( "Display window 2", WINDOW_AUTOSIZE );	// Create a window for display.
+		imshow( "Display window 2", slice );                   // Show our image inside it.
+		waitKey(0);                                          // Wait for a keystroke in the window
+	}
 	*/
 
 	// Extract the keypoints

@@ -180,6 +180,24 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 			temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 			sliceList.push_back(temp_slice);
 
+
+			namedWindow( "Display window0", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window0", subslice0 );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+			namedWindow( "Display window1", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window1", subslice1 );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+
+
+			imwrite("1subslice0.jpg",subslice0);
+			imwrite("1subslice1.jpg",subslice1);
+			imwrite("1slicedone.jpg",slicedone);
+
+			namedWindow( "Display window6", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window6", slicedone );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+
+
 			return slicedone;
 		}
 		//middle slices need 3 subslices
@@ -198,6 +216,28 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 			temp_slice.col_offset = col_offset;
 			temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 			sliceList.push_back(temp_slice);
+
+
+			namedWindow( "Display window0", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window0", subslice0 );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+			namedWindow( "Display window1", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window1", subslice1 );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+			namedWindow( "Display window2", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window2", subslice2);                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+			namedWindow( "Display window4", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window4", slice_op );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+
+			namedWindow( "Display window6", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window6", slicedone );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+			imwrite("1subslice0.jpg",subslice0);
+			imwrite("1subslice1.jpg",subslice1);
+			imwrite("1subslice2.jpg",subslice2);
+			imwrite("1slicedone.jpg",slicedone);
 
 			return slicedone;
 		}
@@ -235,6 +275,20 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 			}
 			temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 			sliceList.push_back(temp_slice);
+			namedWindow( "Display window0", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window0", subslice0 );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+			namedWindow( "Display window1", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window1", subslice1 );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+
+			namedWindow( "Display window6", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window6", slicedone );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+			imwrite("1subslice0.jpg",subslice0);
+			imwrite("1subslice1.jpg",subslice1);
+
+			imwrite("1slicedone.jpg",slicedone);
 
 			return slicedone;
 		}
@@ -250,37 +304,80 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 			Mat subslice2 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat slice_op;
 
+			namedWindow( "Display window0", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window0", subslice0 );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+			namedWindow( "Display window1", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window1", subslice1 );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+			namedWindow( "Display window2", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window2", subslice2);                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+			imwrite("1subslice0.jpg",subslice0);
+			imwrite("1subslice1.jpg",subslice1);
+			imwrite("1subslice2.jpg",subslice2);
+
 			if(j == cameraList.sub_slices_total-1){
 				temp_slice.last_subslices_iteration = true;
 				//cut last subslice in order to get good concatenation with penultimate
 				hconcat(subslice0,subslice1,slice_op);
 				Size sz0 = slice_op.size();
+				Size sz2 = subslice1.size();
 				Size sz1 = subslice2.size();
 
+
 				//know where is the last column with the same information (image) of the penultimate subslice
-				int xcoordinateLast = (subsliceList[j-1].sub_slice_topleft.xCoordinate+sz1.width-subsliceList[j].sub_slice_topleft.xCoordinate);
+				int xcoordinateLast = (subsliceList[j-1].sub_slice_topleft.xCoordinate+sz2.width-subsliceList[j].sub_slice_topleft.xCoordinate);
 
-				//cut to get only the different information of the image (remove the repeated image part)
-				Mat subslicecut;
-				int s1 = xcoordinateLast;
-				int s2 = sz1.width;
-				subslicecut = Mat(subslice2, Range(0,sz1.height), Range(s1,s2)).clone();
+				cerr << "xcoordinateLast: "<< xcoordinateLast << " width penultimate: "<<sz2.width<< " width last: " <<sz1.width<< " topleft penultimate: " <<subsliceList[j-1].sub_slice_topleft.xCoordinate<<" topleft last: " << subsliceList[j].sub_slice_topleft.xCoordinate<< endl;
 
-				//fill with 0s the remaining size of the subslice (minimum size is the overlap)
-				Mat blackImage = Mat::zeros(Size(sz1.width-subslicecut.cols,sz1.height),subslicecut.type());
-				//Mat sliceLarge;
-				hconcat(subslicecut,blackImage,subslicecut);
+				if(xcoordinateLast!=sz1.width && xcoordinateLast >0){
+					//cut to get only the different information of the image (remove the repeated image part)
+					cerr << "In IF" << endl;
+					Mat subslicecut;
+					int s1 = xcoordinateLast;
+					int s2 = sz1.width;
+
+					subslicecut = Mat(subslice2, Range(0,sz1.height), Range(s1,s2)).clone();
+					cerr << "sliceCutdone" << endl;
+
+					//fill with 0s the remaining size of the subslice (minimum size is the overlap)
+					Mat blackImage = Mat::zeros(Size(sz1.width-subslicecut.cols,sz1.height),subslicecut.type());
+					cerr << "black space done" << endl;
+
+					//Mat sliceLarge;
+					hconcat(subslicecut,blackImage,subslice2);
+
+					namedWindow( "Display window3", WINDOW_AUTOSIZE );// Create a window for display.
+					imshow( "Display window3", subslicecut );                   // Show our image inside it.
+					waitKey(0);
+
+					namedWindow( "Display window4", WINDOW_AUTOSIZE );// Create a window for display.
+					imshow( "Display window4", subslice2 );                   // Show our image inside it.
+					waitKey(0);                                          // Wait for a keystroke in the window
+
+					imwrite("1subslicecut.jpg",subslicecut);
+					imwrite("1subslice2cut.jpg",subslice2);
+
+
+				}
+				cerr << "Out IF" << endl;
+
+
 
 				//merge with the correct subslice image
-				hconcat(slice_op,subslicecut,slicedone);
+				hconcat(slice_op,subslice2,slicedone);
 				col_offset = subsliceList[j-2].sub_slice_topleft.xCoordinate;
-
+				namedWindow( "Display window6", WINDOW_AUTOSIZE );// Create a window for display.
+				imshow( "Display window6", slicedone );                   // Show our image inside it.
+				waitKey(0);
 				temp_slice.id = subslices_iteration;
 				temp_slice.col_offset = col_offset;
 
 				temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 				sliceList.push_back(temp_slice);
 
+				imwrite("1slicedone.jpg",slicedone);
 				return slicedone;
 			}
 
@@ -288,6 +385,12 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 			hconcat(slice_op,subslice2,slicedone);
 			col_offset = subsliceList[j-2].sub_slice_topleft.xCoordinate;
 
+
+			namedWindow( "Display window6", WINDOW_AUTOSIZE );// Create a window for display.
+			imshow( "Display window6", slicedone );                   // Show our image inside it.
+			waitKey(0);                                          // Wait for a keystroke in the window
+
+			imwrite("1slicedone.jpg",slicedone);
 			temp_slice.id = subslices_iteration;
 			temp_slice.col_offset = col_offset;
 
@@ -307,31 +410,56 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 				Mat subslice1 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
 				Mat subslice2 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
 				Mat slice_op;
+				imwrite("2subslice0.jpg",subslice0);
+				imwrite("2subslice1.jpg",subslice1);
+				imwrite("2subslice2.jpg",subslice2);
 				hconcat(subslice0,subslice1,slice_op);
+				namedWindow( "Display window0", WINDOW_AUTOSIZE );// Create a window for display.
+				imshow( "Display window0", subslice0 );                   // Show our image inside it.
+				waitKey(0);                                          // Wait for a keystroke in the window
+				namedWindow( "Display window1", WINDOW_AUTOSIZE );// Create a window for display.
+				imshow( "Display window1", subslice1 );                   // Show our image inside it.
+				waitKey(0);                                          // Wait for a keystroke in the window
+				namedWindow( "Display window2", WINDOW_AUTOSIZE );// Create a window for display.
+				imshow( "Display window2", subslice2);                   // Show our image inside it.
+				waitKey(0);                                          // Wait for a keystroke in the window
 
 				if(j == cameraList.sub_slices_total-1){
 				//cut last subslice in order to get good concatenation with penultimate
 
-					Size sz0 = slice_op.size();
+					Size sz0 = subslice1.size();
 					Size sz1 = subslice2.size();
 
 					//know where is the last column with the same information (image) of the penultimate subslice
-					int xcoordinateLast = (subsliceList[j-1].sub_slice_topleft.xCoordinate+sz1.width-subsliceList[j].sub_slice_topleft.xCoordinate);
+					int xcoordinateLast = (subsliceList[j-1].sub_slice_topleft.xCoordinate+sz0.width-subsliceList[j].sub_slice_topleft.xCoordinate);
+					cerr << "xcoordinateLast: "<< xcoordinateLast << " width last: " <<sz1.width<< " topleft penultimate: " <<subsliceList[j-1].sub_slice_topleft.xCoordinate<<" topleft last: " << subsliceList[j].sub_slice_topleft.xCoordinate<< endl;
 
-					//cut to get only the different information of the image (remove the repeated image part)
-					Mat subslicecut;
-					int s1 = xcoordinateLast;
-					int s2 = sz1.width;
-					subslicecut = Mat(subslice2, Range(0,sz1.height), Range(s1,s2)).clone();
+					if(xcoordinateLast!=sz1.width && xcoordinateLast >0){
+						//cut to get only the different information of the image (remove the repeated image part)
+						Mat subslicecut;
+						int s1 = xcoordinateLast;
+						int s2 = sz1.width;
+						subslicecut = Mat(subslice2, Range(0,sz1.height), Range(s1,s2)).clone();
 
-					//fill with 0s the remaining size of the subslice (minimum size is the overlap)
-					Mat blackImage = Mat::zeros(Size(sz1.width-subslicecut.cols,sz1.height),subslicecut.type());
-					//Mat sliceLarge;
-					hconcat(subslicecut,blackImage,subslicecut);
-
+						//fill with 0s the remaining size of the subslice (minimum size is the overlap)
+						Mat blackImage = Mat::zeros(Size(sz1.width-subslicecut.cols,sz1.height),subslicecut.type());
+						//Mat sliceLarge;
+						hconcat(subslicecut,blackImage,subslice2);
+						namedWindow( "Display window3", WINDOW_AUTOSIZE );// Create a window for display.
+											imshow( "Display window3", subslicecut );                   // Show our image inside it.
+											waitKey(0);
+											imwrite("2subslice2cut.jpg",subslice2);
+					}
 					//merge with the correct subslice image
-					hconcat(slice_op,subslicecut,slicedone);
+					hconcat(slice_op,subslice2,slicedone);
 					col_offset = subsliceList[j-2].sub_slice_topleft.xCoordinate;
+					namedWindow( "Display window4", WINDOW_AUTOSIZE );// Create a window for display.
+								imshow( "Display window4", subslice2 );                   // Show our image inside it.
+								waitKey(0);                                          // Wait for a keystroke in the window
+
+
+								imwrite("2slicedone.jpg",slicedone);
+
 
 					temp_slice.id = subslices_iteration;
 					temp_slice.col_offset = col_offset;
@@ -344,7 +472,10 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 
 				hconcat(slice_op,subslice2,slicedone);
 				col_offset = subsliceList[j-2].sub_slice_topleft.xCoordinate;
-
+				namedWindow( "Display window6", WINDOW_AUTOSIZE );// Create a window for display.
+				imshow( "Display window6", slicedone );                   // Show our image inside it.
+				waitKey(0);                                          // Wait for a keystroke in the window
+				imwrite("2slicedone.jpg",slicedone);
 				temp_slice.id = subslices_iteration;
 				temp_slice.col_offset = col_offset;
 				temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
@@ -363,33 +494,61 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 					Mat subslice0 = imdecode(subsliceList[j-2].data, CV_LOAD_IMAGE_GRAYSCALE);
 					Mat subslice1 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
 					Mat subslice2 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
+					imwrite("2subslice0.jpg",subslice0);
+					imwrite("2subslice1.jpg",subslice1);
+					imwrite("2subslice2.jpg",subslice2);
+					namedWindow( "Display window0", WINDOW_AUTOSIZE );// Create a window for display.
+									imshow( "Display window0", subslice0 );                   // Show our image inside it.
+									waitKey(0);                                          // Wait for a keystroke in the window
+									namedWindow( "Display window1", WINDOW_AUTOSIZE );// Create a window for display.
+									imshow( "Display window1", subslice1 );                   // Show our image inside it.
+									waitKey(0);                                          // Wait for a keystroke in the window
+									namedWindow( "Display window2", WINDOW_AUTOSIZE );// Create a window for display.
+									imshow( "Display window2", subslice2);                   // Show our image inside it.
+									waitKey(0);                                          // Wait for a keystroke in the window
 
 					//in this case we need to cut the penultimate and antipenultimate in order to compute the last subslice
+					Size sz1 = subslice1.size();
 					Size sz2 = subslice2.size();
 
 					//know where is the last column with the same information (image) of the penultimate subslice
-					int xcoordinateLast = sz2.width-(subsliceList[j-1].sub_slice_topleft.xCoordinate+sz2.width-subsliceList[j].sub_slice_topleft.xCoordinate);
+					int xcoordinateLast = sz2.width-(subsliceList[j-1].sub_slice_topleft.xCoordinate+sz1.width-subsliceList[j].sub_slice_topleft.xCoordinate);
+					cerr << "xcoordinateLast: "<< xcoordinateLast << " width last: "<<sz2.width<< " topleft penultimate: " <<subsliceList[j-1].sub_slice_topleft.xCoordinate<<" topleft last: " << subsliceList[j].sub_slice_topleft.xCoordinate<< endl;
 
-					//cut to get only the different information of the image (remove the repeated image part)
-					Mat subslicecut2;
-					int s1 = 0;
-					int s2 = xcoordinateLast;
-					subslicecut2 = Mat(subslice1, Range(0,sz2.height), Range(s1,s2)).clone();
+					if(xcoordinateLast!=sz2.width && xcoordinateLast >0){
+						//cut to get only the different information of the image (remove the repeated image part)
+						Mat subslicecut2;
+						int s1 = 0;
+						int s2 = xcoordinateLast;
+						subslicecut2 = Mat(subslice1, Range(0,sz2.height), Range(s1,s2)).clone();
 
-					//get the width remaining part with the image of antipenultimate subslice
-					Mat subslicecut1;
-					s1 = xcoordinateLast;
-					s2 = sz2.width;
-					subslicecut1 = Mat(subslice0, Range(0,sz2.height), Range(s1,s2)).clone();
+						//get the width remaining part with the image of antipenultimate subslice
+						Mat subslicecut1;
+						s1 = xcoordinateLast;
+						s2 = sz2.width;
+						subslicecut1 = Mat(subslice0, Range(0,sz2.height), Range(s1,s2)).clone();
 
-					//merge the firsts subslices to get the width
-					hconcat(subslicecut1,subslicecut2,subslicecut2);
+						//merge the firsts subslices to get the width
+						hconcat(subslicecut1,subslicecut2,subslice1);
 
+						namedWindow( "Display window3", WINDOW_AUTOSIZE );// Create a window for display.
+																	imshow( "Display window3", subslicecut1 );                   // Show our image inside it.
+																	waitKey(0);
+																	namedWindow( "Display window7", WINDOW_AUTOSIZE );// Create a window for display.
+																	imshow( "Display window7", subslicecut2 );                   // Show our image inside it.
+																	waitKey(0);
+																	imwrite("2subslice1cutfinal.jpg",subslice1);
+																	imwrite("2subslice1cut1.jpg",subslicecut1);
+																	imwrite("2subslice1cut2.jpg",subslicecut2);
+
+					}
 					//merge with the last subslice
-					hconcat(subslicecut2,subslice2,slicedone);
-
+					hconcat(subslice1,subslice2,slicedone);
+					imwrite("2subslicedone.jpg",slicedone);
 					col_offset = subsliceList[j-1].sub_slice_topleft.xCoordinate;
-
+					namedWindow( "Display window6", WINDOW_AUTOSIZE );// Create a window for display.
+					imshow( "Display window6", slicedone );                   // Show our image inside it.
+					waitKey(0);
 					temp_slice.id = subslices_iteration;
 					temp_slice.col_offset = col_offset;
 					temp_slice.last_subslices_iteration = true;
@@ -404,51 +563,50 @@ Mat ProcessingManager::mergeSubSlices(int subslices_iteration, vector<subslice> 
 					//in this case we don't have the necessary information (subslices)
 					Mat subslice0 = imdecode(subsliceList[j-1].data, CV_LOAD_IMAGE_GRAYSCALE);
 					Mat subslice1 = imdecode(subsliceList[j].data, CV_LOAD_IMAGE_GRAYSCALE);
-
+					namedWindow( "Display window0", WINDOW_AUTOSIZE );// Create a window for display.
+									imshow( "Display window0", subslice0 );                   // Show our image inside it.
+									waitKey(0);                                          // Wait for a keystroke in the window
+									namedWindow( "Display window1", WINDOW_AUTOSIZE );// Create a window for display.
+									imshow( "Display window1", subslice1 );                   // Show our image inside it.
+									waitKey(0);                                          // Wait for a keystroke in the window
 					//cut the penultimate in order to compute the last subslice
 					//know where is the last column with the same information (image) of the penultimate subslice
+					Size sz0 = subslice0.size();
 					Size sz1 = subslice1.size();
 					int xcoordinateLast = sz1.width-(subsliceList[j-1].sub_slice_topleft.xCoordinate+sz1.width-subsliceList[j].sub_slice_topleft.xCoordinate);
+					cerr << "xcoordinateLast: "<< xcoordinateLast << " width last: " <<sz0.width<< " topleft penultimate: " <<subsliceList[j-1].sub_slice_topleft.xCoordinate<<" topleft last: " << subsliceList[j].sub_slice_topleft.xCoordinate<< endl;
 
-					if(xcoordinateLast!=sz1.width){
+					if(xcoordinateLast!=sz1.width && xcoordinateLast >0){
 						//cut to get only the different information of the image (remove the repeated image part)
 						Mat subslicecut;
 						int s1 = 0;
 						int s2 = xcoordinateLast;
 						subslicecut = Mat(subslice0, Range(0,sz1.height), Range(s1,s2)).clone();
 
-						namedWindow( "Display window0", WINDOW_AUTOSIZE );	// Create a window for display.
-						imshow( "Display window0", subslicecut );                   // Show our image inside it.
-						waitKey(0);
-
 						//fill with 0s the remaining size of the subslice (minimum size is the overlap)
 						Mat blackImage = Mat::zeros(Size(sz1.width-subslicecut.cols,sz1.height),subslicecut.type());
 						hconcat(blackImage,subslicecut,subslice0);
-
-						namedWindow( "Display window1", WINDOW_AUTOSIZE );	// Create a window for display.
-						imshow( "Display window1", blackImage );                   // Show our image inside it.
-						waitKey(0);
-
-
+						namedWindow( "Display window3", WINDOW_AUTOSIZE );// Create a window for display.
+																							imshow( "Display window3", subslicecut );                   // Show our image inside it.
+																							waitKey(0);
+																							namedWindow( "Display window7", WINDOW_AUTOSIZE );// Create a window for display.
+																							imshow( "Display window7", blackImage );                   // Show our image inside it.
+																							waitKey(0);
 
 					}
-
 					hconcat(subslice0,subslice1,slicedone);
 
-
-					namedWindow( "Display window2", WINDOW_AUTOSIZE );	// Create a window for display.
-					imshow( "Display window2", slicedone );                   // Show our image inside it.
-					waitKey(0);                                          // Wait for a keystroke in the window*/
-
 					col_offset = subsliceList[j-1].sub_slice_topleft.xCoordinate;
-
+					namedWindow( "Display window6", WINDOW_AUTOSIZE );// Create a window for display.
+					imshow( "Display window6", slicedone );                   // Show our image inside it.
+					waitKey(0);
 					temp_slice.id = subslices_iteration;
 					temp_slice.col_offset = col_offset;
 					temp_slice.last_subslices_iteration = true;
 					cerr << "last subslice" << endl;
 					temp_slice.mergeTime = (getTickCount()-mergeTime)/getTickFrequency();
 					sliceList.push_back(temp_slice);
-
+					imwrite("2subslicedone.jpg",slicedone);
 					return slicedone;
 				}
 			}

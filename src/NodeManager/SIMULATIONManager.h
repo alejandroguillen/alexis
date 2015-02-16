@@ -11,13 +11,13 @@
 #include <vector>
 #include "NodeManager/NodeManager.h"
 #include "RadioSystem/RadioSystem.h"
-#include "RadioSystem/Algorithms.h"
 #include "RadioSystem/ProcessingSpeedEstimator.h"
 #include "RadioSystem/TxSpeedEstimator.h"
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <RadioSystem/LoadBalancing.h>
 
 using namespace std;
 using namespace cv;
