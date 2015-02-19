@@ -90,33 +90,7 @@ src/RadioSystem/RadioSystem.d: ../src/RadioSystem/RadioSystem.cpp \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ConnectionManager.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/Connection.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/Header.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ALWiFiRadioSystem.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/S2GInterface/S2GInterface.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/NodeManager/SIMULATIONManager.h \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/opencv.hpp \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/imgproc/imgproc_c.h \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/photo/photo.hpp \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/photo/photo_c.h \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/video/video.hpp \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/video/tracking.hpp \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/video/background_segm.hpp \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/objdetect/objdetect.hpp \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/calib3d/calib3d.hpp \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/ml/ml.hpp \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/contrib/contrib.hpp \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/contrib/retina.hpp \
- /home/alexis/BeagleBone/opencv-arm/include/opencv2/contrib/openfabmap.hpp \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingSpeedEstimator.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/LoadBalancing.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/LoadBalancingConfig.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_lib.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_types.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_utils.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_Hash.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_matrix.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_mipbb.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_SOS.h
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/S2GInterface/S2GInterface.h
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/RadioSystem.h:
 
@@ -300,56 +274,4 @@ src/RadioSystem/RadioSystem.d: ../src/RadioSystem/RadioSystem.cpp \
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/Header.h:
 
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ALWiFiRadioSystem.h:
-
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/S2GInterface/S2GInterface.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/NodeManager/SIMULATIONManager.h:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/opencv.hpp:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/imgproc/imgproc_c.h:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/photo/photo.hpp:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/photo/photo_c.h:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/video/video.hpp:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/video/tracking.hpp:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/video/background_segm.hpp:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/objdetect/objdetect.hpp:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/calib3d/calib3d.hpp:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/ml/ml.hpp:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/contrib/contrib.hpp:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/contrib/retina.hpp:
-
-/home/alexis/BeagleBone/opencv-arm/include/opencv2/contrib/openfabmap.hpp:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingSpeedEstimator.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/LoadBalancing.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/LoadBalancingConfig.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_lib.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_types.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_utils.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_Hash.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_matrix.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_mipbb.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_SOS.h:

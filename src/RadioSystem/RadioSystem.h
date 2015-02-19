@@ -36,9 +36,6 @@ public:
 	void joinTelosbReceiver();
 
 	void startWiFiReceiver();
-	void startWiFiReceiver2(); //ALEXIS 15/12 WIFI CLASS
-	//int startWiFiReceiver2(); //ALEXIS 14/12 WIFI THREAD
-	//void joinWifiReceiver2(); //ALEXIS 14/12 WIFI THREAD
 
 	void startTelosbMsg();
 	serial_source getTelosb();
@@ -51,13 +48,9 @@ private:
 	NodeManager *nodeManager_ptr;
 	TelosbRadioSystem *telosbRadioSystem_ptr;
 	WiFiRadioSystem *wifiRadioSystem_ptr;
-	//WiFiRadioSystem *wifiRadioSystem_ptr2; //ALEXIS 14/12 WIFI THREAD
-	ALWiFiRadioSystem *wifiRadioSystem_ptr2; //ALEXIS 15/12 WIFI CLASS
 
 	IncomingMessageQueue *incoming_message_queue_ptr;
 	MessageParser *msg_parser;
-	//boost::thread m_thread;
-	//void radioSystemThread();
 
 };
 

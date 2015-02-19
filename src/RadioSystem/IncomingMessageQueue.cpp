@@ -13,11 +13,9 @@ IncomingMessageQueue::IncomingMessageQueue(RadioSystem* radio_system, MessagePar
 	radio_system_ptr = radio_system;
 	msg_parser = m;
 	last_seq_num = -1;
-	last_seq_num1 = -1;	//ALEXIS 12/12
-	last_seq_num2 = -1; //ALEXIS 12/12
-	//last_seq_num1.reserve(2); //ALEXIS 09/01 Vectorial
-	//std::fill_n(last_seq_num1, 2, -1); //ALEXIS 09/01 Vectorial
-	//last_src_addr = 0; //ALEXIS 11/12 LAST
+	last_seq_num1 = -1;
+	last_seq_num2 = -1;
+	//last_seq_num1.reserve(2);
 }
 
 IncomingMessageQueue::~IncomingMessageQueue() {
@@ -28,7 +26,7 @@ int IncomingMessageQueue::size(){
 	//boost::mutex::scoped_lock lock(the_mutex);
 	return message_queue.size();
 }
-//ALEXIS problem with the SINKQueue 
+
 void IncomingMessageQueue::addPacketToSinkQueue(int src_addr, int dst_addr, MessageType message_type, int seq_num, int num_packets, int packet_id, vector<char> packet_bitstream){
 	//boost::mutex::scoped_lock lock(the_mutex);
 
@@ -49,43 +47,34 @@ void IncomingMessageQueue::addPacketToSinkQueue(int src_addr, int dst_addr, Mess
 			break;
 		}
 	}
-
-	/*//ALEXIS 11/12 LAST initiation of the variable with the first Camera Advice
-		if(last_src_addr == 0)
-			last_src_addr=src_addr;
-	*///
 	
-	//ALEXIS 12/12
 	if(src_addr==1){
 		last_seq_num = last_seq_num1;
 	}
 	else if(src_addr==2){
 		last_seq_num = last_seq_num2;
 	}
-	//
 	
-	//last_seq_num = last_seq_num1[src_addr-1]; //ALEXIS 09/01 Vectorial
+	//last_seq_num = last_seq_num1[src_addr-1];
 
 	//create new entry if seq_num is different...
 	if(!entry_exists && seq_num!=last_seq_num){
 		message_queue_entry new_entry;
-		//new_entry.last_packet_id1.reserve(2); //ALEXIS 09/01 Vectorial
+		//new_entry.last_packet_id1.reserve(2);
 		if(src_addr==1){
 			last_seq_num1 = seq_num; 
 		}
 		else if(src_addr==2){
 			last_seq_num2 = seq_num;
 		}
-		//last_seq_num1[src_addr-1] = seq_num; //ALEXIS 09/01 Vectorial
-		//last_src_addr = src_addr; //ALEXIS 11/12 LAST
+		//last_seq_num1[src_addr-1] = seq_num;
 		new_entry.src_addr = src_addr;
 		new_entry.dst_addr = dst_addr;
 		new_entry.message_type = message_type;
 		new_entry.seq_num = seq_num;
 		new_entry.num_packets = num_packets;
-		//new_entry.last_packet_id = packet_id; //ORIGINAL
+		//new_entry.last_packet_id = packet_id;
 
-		//ALEXIS 12/12
 		if(src_addr==1){
 			new_entry.last_packet_id1 = packet_id;
 		}
@@ -93,22 +82,11 @@ void IncomingMessageQueue::addPacketToSinkQueue(int src_addr, int dst_addr, Mess
 			new_entry.last_packet_id2 = packet_id;
 		}
 		//
-		//new_entry.last_packet_id1[src_addr-1] = packet_id; //ALEXIS 09/01 Vectorial
+		//new_entry.last_packet_id1[src_addr-1] = packet_id;
 		
 		new_entry.bitstream.insert(new_entry.bitstream.begin(),packet_bitstream.begin(),packet_bitstream.end());
 		new_entry.start_time = cv::getTickCount();
-		/*if(new_entry.last_packet_id == 0){  //ORIGINAL
-			cout << "IMQ: a new entry is created..." << endl;
-			message_queue.push_back(new_entry);
-			if(num_packets == 1){
-				deserializeAndNotify(message_queue.size()-1);
-		}
-		else{
-			cout << "Lost first packet of the message, dropping this packet " << endl;
-		}
-		}*/
-		
-		//ALEXIS 12/12
+
 		if(src_addr==1){
 			if(new_entry.last_packet_id1 == 0){
 				cout << "IMQ: a new entry is created..." << endl;
@@ -133,25 +111,10 @@ void IncomingMessageQueue::addPacketToSinkQueue(int src_addr, int dst_addr, Mess
 				cout << "Lost first packet of the message, dropping this packet " << endl;
 			}			
 		}
-		//
-		/*//ALEXIS 09/01 Vectorial
-		if(new_entry.last_packet_id1[src_addr-1] == 0){  
-			cout << "IMQ: a new entry is created..." << endl;
-			message_queue.push_back(new_entry);
-			if(num_packets == 1){
-				deserializeAndNotify(message_queue.size()-1);
-		}
-		else{
-			cout << "Lost first packet of the message, dropping this packet " << endl;
-		}
-		}
-		*///
 	}
 	//else append the packet_bitstream in the right position
 	else{
-		//int last_packet_id = message_queue[cur_pos].last_packet_id;//ORIGINAL
 		
-		//ALEXIS 12/12
 		int last_packet_id;
 		if(src_addr==1){
 			last_packet_id = message_queue[cur_pos].last_packet_id1;
@@ -159,26 +122,23 @@ void IncomingMessageQueue::addPacketToSinkQueue(int src_addr, int dst_addr, Mess
 		else if(src_addr==2){
 			last_packet_id = message_queue[cur_pos].last_packet_id2;
 		}
-		//
-		//int last_packet_id = message_queue[cur_pos].last_packet_id1[src_addr-1]; //ALEXIS 09/01 Vectorial
+		//int last_packet_id = message_queue[cur_pos].last_packet_id1[src_addr-1];
 		
 
 		//check if the received packet is in the right order
-
 		if(packet_id == last_packet_id+1){
 			//append the bitstream
 			cout << "adding packet to the queue" << endl;
 			message_queue[cur_pos].bitstream.insert(message_queue[cur_pos].bitstream.end(),packet_bitstream.begin(),packet_bitstream.end());
-			//message_queue[cur_pos].last_packet_id++; //ORIGINAL
-			//ALEXIS 12/12
+
 			if(src_addr==1){
 				message_queue[cur_pos].last_packet_id1++;
 			}
 			else if(src_addr==2){
 				message_queue[cur_pos].last_packet_id2++;
 			}
-			//
-			//message_queue[cur_pos].last_packet_id1[src_addr-1]++; //ALEXIS 09/01 Vectorial
+
+			//message_queue[cur_pos].last_packet_id1[src_addr-1]++;
 			
 			//deserialize if it was the last packet!
 			if(packet_id == num_packets-1){
@@ -196,16 +156,8 @@ void IncomingMessageQueue::addPacketToSinkQueue(int src_addr, int dst_addr, Mess
 			}
 		}
 	}
-	/*//ALEXIS 12/12
-	if(src_addr==1){
-		last_packet_id1 = last_packet_id;
-	}
-	else if(src_addr==2){
-		last_packet_id2 = last_packet_id;
-	}
-	//*/
 }
-//
+
 void IncomingMessageQueue::addPacketToQueue(int src_addr, int dst_addr, MessageType message_type, int seq_num, int num_packets, int packet_id, vector<char> packet_bitstream){
 	//boost::mutex::scoped_lock lock(the_mutex);
 	bool entry_exists = false;
@@ -275,12 +227,8 @@ void IncomingMessageQueue::addPacketToQueue(int src_addr, int dst_addr, MessageT
 			if(packet_id > last_packet_id+1){
 				cout << "packet out of order" << endl;
 			}
-
 		}
-
-
 	}
-
 }
 
 void IncomingMessageQueue::deserializeAndNotify(int cur_pos){

@@ -376,17 +376,6 @@ int LoadBalancing::lp_matrix_formulation(vector<double>& c, vector<double>& p, v
 		}
 	}
 
-	//Ttransmit: D3*xi + G3 = G3
-	/*for(int n=0; n<num_using_nodes_; n++){
-		for(int m=0; m<num_using_nodes_; m++){
-			if(n==m){
-				lp_D[m*num_using_nodes_+n] += 0;
-			}else if(m==n+1){
-				lp_D[m*num_using_nodes_+n] += 0;
-			}
-		}
-	}*/
-
 	lp_G[0] += 2*height_*width_*overlap_*C[0];
 	for(int n=1; n<num_using_nodes_; n++){
 		lp_G[n] += 3*height_*width_*overlap_*C[n];
@@ -423,7 +412,7 @@ void LoadBalancing::lp_create_model() {
 	int i,j;
 	int *colno=(int*)malloc((Ncol+1)*sizeof(int)); // must be 1 more then number of columns ! //
 	REAL *row=(REAL*)malloc((Ncol+1)*sizeof(REAL)); // must be 1 more then number of columns ! //
-	int *sosvars=(int*)malloc((num_quantiles_+2)*sizeof(int));	//???
+	int *sosvars=(int*)malloc((num_quantiles_+2)*sizeof(int));
 	int ret;
 
 	lp = make_lp(0,Ncol);	//LP inicial con 0 filas
@@ -465,14 +454,6 @@ void LoadBalancing::lp_create_model() {
 	colno[1]=POS_Xi(i+1);
 	row[1]=-1;
 	add_constraintex(lp,2,row,colno,LE,-overlap_);
-
-	//ALEXIS 07/02
-	//every cut has to be different to 0: (x[n]>0) => (-x[n]<=-overlap)
-	/*for(i=0;i<num_using_nodes_;i++){
-		colno[0]=POS_Xi(i);
-		row[0]=-1;
-		add_constraintex(lp,1,row,colno,LE,-overlap_);
-	}*/
 
 
 	//And the last cut must be 1: (x[num_using_nodes_]=1)

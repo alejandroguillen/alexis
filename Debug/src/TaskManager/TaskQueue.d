@@ -71,8 +71,7 @@ src/TaskManager/TaskQueue.d: ../src/TaskManager/TaskQueue.cpp \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/WiFiRadioSystem.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ConnectionManager.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/Connection.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/Header.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ALWiFiRadioSystem.h
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/Header.h
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/TaskManager/TaskQueue.h:
 
@@ -219,5 +218,3 @@ src/TaskManager/TaskQueue.d: ../src/TaskManager/TaskQueue.cpp \
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/Connection.h:
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/Header.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ALWiFiRadioSystem.h:

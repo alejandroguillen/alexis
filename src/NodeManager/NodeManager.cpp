@@ -11,9 +11,9 @@
 #include "Messages/AddCameraMsg.h"
 #include "RadioSystem/OffloadingManager.h"
 #include "RadioSystem/ProcessingManager.h"
-#include "NodeManager/SIMULATIONManager.h"
 
-#define NUM_COOP 2 //CHANGE number of Cooperators -------------------------------------------------------------------------------------
+#define NUM_COOP 1 //CHANGE number of Cooperators
+#define NUM_CAMERAS 2 //CHANGE number of Cameras
 using namespace std;
 
 //todo: deadline timer for keeping the system active even if the start/stop message is not received
@@ -31,11 +31,6 @@ NodeManager::NodeManager(NodeType nt, string ID){
 		imgAcq = new ImageAcquisition(0);
 		//imgAcq = new ImageAcquisition(0,1024,768);
 
-		/*
-		capture = new VideoCapture("util/sample_VIDEO_hearts.avi");
-		double count = capture->get(CV_CAP_PROP_FRAME_COUNT);
-		cout << "NM: " << count << " Nframes total"<< endl;
-		*/
 		count_frame=0;
 
 
@@ -54,8 +49,8 @@ NodeManager::NodeManager(NodeType nt, string ID){
 		break;
 	}
 	case COOPERATOR:{
-		countsubslices.reserve(2); //Change Number of Cameras
-		firstprocess.reserve(2); //Change Number of Cameras
+		countsubslices.reserve(NUM_CAMERAS);
+		firstprocess.reserve(NUM_CAMERAS);
 
 		BRISK_detParams detPrms(60,4);
 		
@@ -66,7 +61,7 @@ NodeManager::NodeManager(NodeType nt, string ID){
 
 		encoder = new VisualFeatureEncoding();
 		
-		for(int i=0;i<2;i++){ //Change Number of Cameras
+		for(int i=0;i<NUM_CAMERAS;i++){
 
 			processing_manager.push_back(new ProcessingManager(this,i));
 
@@ -81,12 +76,11 @@ NodeManager::NodeManager(NodeType nt, string ID){
 		break;
 	}
 	cur_state = IDLE;
-	datc_param_camera.reserve(2); //ALEXIS 14/12 //Change Number of Cameras
+	datc_param_camera.reserve(NUM_CAMERAS);
 	received_notifications = 0;
 	outgoing_msg_seq_num = 255;
 	frame_id = -1;
 
-	//waitcamera2=true;
 	simulate=0; //ALEXIS SIMULATE 01/02
 }
 
@@ -214,7 +208,7 @@ void NodeManager::notify_msg(Message *msg){
 			datc_param.transmit_scale = 1;
 
 			datc_param.num_feat_per_block = 20;
-			datc_param.num_cooperators = NUM_COOP; //CHANGE COOP number here------------------------------------------------------------
+			datc_param.num_cooperators = NUM_COOP;
 
 			//
 			/* ORIGINAL 
@@ -262,7 +256,7 @@ void NodeManager::notify_msg(Message *msg){
 			datc_param_camera[i].transmit_scale = 1;
 
 			datc_param_camera[i].num_feat_per_block = 20;
-			datc_param_camera[i].num_cooperators = NUM_COOP; //CHANGE COOP number here------------------------------------------------------------
+			datc_param_camera[i].num_cooperators = NUM_COOP;
 			//
 			
 			/* ORIGINAL
@@ -314,7 +308,7 @@ void NodeManager::notify_msg(Message *msg){
 				}
 				countsubslices[pos_camera]++;
 				processing_manager[pos_camera]->addSubSliceData((DataCTAMsg*)msg);
-				//processing_manager[pos_camera]->start();
+
 				if(((DataCTAMsg*)msg)->getSliceNumber()==countsubslices[pos_camera]){
 					countsubslices[pos_camera]=0;
 				}	
@@ -336,8 +330,7 @@ void NodeManager::notify_msg(Message *msg){
 		case CAMERA:{
 			DATC_store_features((DataATCMsg*)msg);
 			delete(msg);
-			//SIMULATION(2); //ALEXIS SIMULATE 01/02
-			//simulation_manager->start();
+
 			radioSystem_ptr->startTelosbMsg();
 			break;
 		}
@@ -405,33 +398,9 @@ void NodeManager::notify_msg(Message *msg){
 }
 
 
-/*void NodeManager::AddDATC(camera* cameraList){
-
-	/*
-	if(msg->getDestination()==1){
-	waitcamera2 = true;
-	cout << "PM: Waiting Camera 2" << endl;
-	{
-		boost::mutex::scoped_lock lock(m_mutex2);
-		while(waitcamera2){
-			m_condition2.wait(lock);
-		}
-	}
-	cout << "PM: Camera 1 awakes" << endl;
-	}else{
-		
-		cout << "PM: Awaking Camera 1" << endl;
-		boost::mutex::scoped_lock lock(m_mutex2);
-		waitcamera2 = false;
-		m_condition2.notify_one();
-	}
-}
-*/
-
-
 int NodeManager::notify_endTask(){
 	cout << "NM: a end-task notification has been received" << endl;
-	cur_task_finished.notify_all(); /////////change whether is Coop (all) or Camera (one)
+	cur_task_finished.notify_all();
 
 	return 0;
 }
@@ -698,31 +667,16 @@ void NodeManager::DATC_processing_thread(){
 
 	count_frame++;
 	// Acquire the image
-	//cur_task = new AcquireFrameTask(imgAcq,count_frame);
-	cur_task = new AcquireImageTask(imgAcq);
+	cur_task = new AcquireFrameTask(imgAcq,count_frame);
+	//cur_task = new AcquireImageTask(imgAcq);
 	taskManager_ptr->addTask(cur_task);
 	//cout << "NM: Waiting the end of the acquire_image_task" << endl;
 	while(!cur_task->completed){
 		cur_task_finished.wait(lk);
 	}
 	cout << "NM: ended acquire_image_task" << endl;
-	Mat image = ((AcquireImageTask*)cur_task)->getImage();
-	delete((AcquireImageTask*)cur_task);
-
-
-	/*
-	Mat image;
-	capture->set(CV_CAP_PROP_POS_FRAMES,count_frame);
-	capture->read(image);
-	count_frame++;
-	*/
-
-
-	namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
-	imshow( "Display window", image );                   // Show our image inside it.
-
-	waitKey(0);                                          // Wait for a keystroke in the window
-
+	Mat image = ((AcquireFrameTask*)cur_task)->getImage();
+	delete((AcquireFrameTask*)cur_task);
 
 	// Convert to gray-scale
 	cur_task = new ConvertColorspaceTask(image,0);
@@ -737,16 +691,6 @@ void NodeManager::DATC_processing_thread(){
 
 	//create offloading task
 	offloading_manager->createOffloadingTask(datc_param.num_cooperators, datc_param.max_features);
-
-/*	cur_task = new ProbeAndSortLinkTask(offloading_manager);
-	taskManager_ptr->addTask(cur_task);
-	cout << "NM: Waiting the end of the probe_link_task" << endl;
-	while(!cur_task->completed){
-		cur_task_finished.wait(lk);
-	}
-	cout << "NM: ended probe_link_task" << endl;
-	delete((ProbeAndSortLinkTask*)cur_task);
-	*/
 
 	//compute loads (should become a task)
 	//here one should check what kind of offloading algorithm should be called
@@ -771,7 +715,7 @@ void NodeManager::DATC_processing_thread(){
 	delete((TransmitLoadsTask*)cur_task);
 
 	// Extract the keypoints of own load
-	cur_task = new ExtractKeypointsTask(extractor,myLoad,atc_param.detection_threshold); //ALEXIS 16/12 ERROR atc_param?? datc_param
+	cur_task = new ExtractKeypointsTask(extractor,myLoad,atc_param.detection_threshold);
 	taskManager_ptr->addTask(cur_task);
 	cout << "NM: Waiting the end of the extract_keypoints_task" << endl;
 	while(!cur_task->completed){
@@ -786,7 +730,7 @@ void NodeManager::DATC_processing_thread(){
 	delete((ExtractKeypointsTask*)cur_task);
 
 	//Extract features
-	cur_task = new ExtractFeaturesTask(extractor,myLoad,kpts,atc_param.max_features); //ALEXIS 16/12 ERROR atc_param?? datc_param
+	cur_task = new ExtractFeaturesTask(extractor,myLoad,kpts,atc_param.max_features);
 	taskManager_ptr->addTask(cur_task);
 	cout << "NM: Waiting the end of the extract_features_task" << endl;
 	while(!cur_task->completed){
@@ -802,7 +746,6 @@ void NodeManager::DATC_processing_thread(){
 	//put the unencoded features somewhere...
 	//todo: understand what to do with encoding times
 
-	//ALEXIS MUTEX PROBLEM 03/02
 	offloading_manager->addKeypointsAndFeatures(kpts,features,null,detTime,descTime,0,0);
 }
 
@@ -828,36 +771,10 @@ void NodeManager::DATC_processing_thread_cooperator(int i, vector<uchar> data, C
 	*/
 	slice = imdecode(data,CV_LOAD_IMAGE_GRAYSCALE);
 
-	/*namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
-	imshow( "Display window", slice );                   // Show our image inside it.
-
-	waitKey(0);                                          // Wait for a keystroke in the window*/
-
-
 	//send ACK_SLICE_MESSAGE
 	cout << "Sending ACK_SLICE_MESSAGE" << endl;
 	ACKsliceMsg *ackslice_msg = new ACKsliceMsg(frame_id);
-	/*std::set<Connection*> connections1 = radioSystem_ptr->getWiFiConnections();
-	std::set<Connection*>::iterator it1 = connections1.begin();
-	//ALEXIS 09/01 ACK MESSAGE problem
-	int tmp = connections1.size();
-	if(tmp > 1){   //if because Camera1 off -> error Camera2
-		int ack = msg->getSource();
-		ack--;
-		std::advance(it1, ack);
-	}
-	//
-	/*Another way//ALEXIS 09/01 ACK MESSAGE problem
-	if(msg->getSource() == 1){
-		std::set<Connection*>::iterator it1 = connections1.begin();
-	}
-	else{
-		std::set<Connection*>::iterator it1 = connections1.end();
-	}
-	//*/
-	//Connection* cn1 = *it1;
 	ackslice_msg->setTcpConnection(c);
-	//ALEXIS
 	ackslice_msg->setSource(node_id);
 	ackslice_msg->setDestination(i+1);
 	//
@@ -872,9 +789,6 @@ void NodeManager::DATC_processing_thread_cooperator(int i, vector<uchar> data, C
 	}
 	cout << "NM: exiting the wifi tx thread" << endl;
 	delete((SendWiFiMessageTask*)cur_task);
-	
-	//int i = msg->getSource(); //ALEXIS 16/12 VECTOR
-	//i--; //ALEXIS 16/12 VECTOR only 2 spaces, so it has to be 0 (camera1) or 1 (camera2)
 	
 	double processingTime = getTickCount();
 
@@ -939,23 +853,9 @@ cerr << "extracted " << (int)kpts.size() << "keypoints\tDetThreshold=" << detect
 	processingTime = (getTickCount()-processingTime)/getTickFrequency();
 	
 	DataATCMsg *atc_msg = new DataATCMsg(frame_id, 0, 1, detTime, descTime, kencTime, processingTime, 0, features.rows, kpts.size(), ft_bitstream, kp_bitstream);
-	/*std::set<Connection*> connections = radioSystem_ptr->getWiFiConnections();
-	std::set<Connection*>::iterator it = connections1.begin();
-	//ALEXIS 09/01 ACK MESSAGE problem
-	int tmp1 = connections1.size();
-	if(tmp1 > 1){   //if because Camera1 off -> error Camera2
-		int ack = msg->getSource();
-		ack--;
-		std::advance(it1, ack);
-	}
-	//
-	Connection* cn = *it;
-	*/
 	atc_msg->setTcpConnection(c);
-	//ALEXIS
 	atc_msg->setSource(node_id);
 	atc_msg->setDestination(i+1);
-	//
 	cur_task = new SendWiFiMessageTask(atc_msg);
 	taskManager_ptr->addTask(cur_task);
 	cout << "NM: Waiting the end of the send_wifi_message_task" << endl;
@@ -1029,10 +929,8 @@ void NodeManager::notifyCooperatorOnline(Connection* cn){
 	offloading_manager->addCooperator(cn);
 	//ALEXIS SIMULATE 01/02
 	simulate++;
-	if(simulate==NUM_COOP){ //simulate == number of Coops to wait to start msg //CHANGE COOP number here------------------------------------------------------------
-		
-		//SIMULATION(1);
-		//simulation_manager->start();
+	if(simulate==NUM_COOP){ //simulate == number of Coops to wait to start msg
+
 		radioSystem_ptr->startTelosbMsg();
 	}
 	//
@@ -1040,10 +938,9 @@ void NodeManager::notifyCooperatorOnline(Connection* cn){
 	int port = cn->socket().remote_endpoint().port();
 	CoopInfoMsg *msg = new CoopInfoMsg(ip_addr,port,CoopStatus_online);
 	
-	//ALEXIS 11/12
 	msg->setSource(node_id);
 	msg->setDestination(0);
-	//
+
 	//sendMessage(msg);	//ALEXIS SIMULATE 01/02
 }
 
@@ -1068,26 +965,26 @@ void NodeManager::notifyOffloadingCompleted(vector<KeyPoint>& kpts,Mat& features
 	//prepare the ATC_DATA message and sends it to the SINK
 	//ugly... put into a task!
 	cout << "cutting: kpts size "<< kpts.size() << " feat size " << features.rows << endl;
-	extractor->cutFeatures(kpts,features,datc_param.max_features); //ALEXIS 16/12 ERROR atc_param?? datc_param
+	extractor->cutFeatures(kpts,features,datc_param.max_features);
 	if(kpts.size()>0){
 
-		int num_blocks = ceil((float)kpts.size() / (float)datc_param.num_feat_per_block); //ALEXIS 16/12 ERROR atc_param?? datc_param
+		int num_blocks = ceil((float)kpts.size() / (float)datc_param.num_feat_per_block);
 		int beg,end;
 
-		cout << "features per block: " << (int)datc_param.num_feat_per_block << endl; //ALEXIS 16/12ERROR atc_param?? datc_param
+		cout << "features per block: " << (int)datc_param.num_feat_per_block << endl;
 
 		for(int i=0; i<num_blocks; i++){
 
 			vector<uchar> block_ft_bitstream;
 			vector<uchar> block_kp_bitstream;
 
-			beg = i*datc_param.num_feat_per_block; //ALEXIS 16/12 ERROR atc_param?? datc_param
-			end = min((int)(unsigned int)kpts.size(), (int)(beg+datc_param.num_feat_per_block)); //ALEXIS 16/12 ERROR atc_param?? datc_param
+			beg = i*datc_param.num_feat_per_block;
+			end = min((int)(unsigned int)kpts.size(), (int)(beg+datc_param.num_feat_per_block));
 
 			cout << "here" << beg << " "<< end << endl;
 			Mat features_sub = features.rowRange(beg,end);
 
-			if(datc_param.coding == CodingChoices_none){ //ALEXIS 16/12 ERROR atc_param?? datc_param
+			if(datc_param.coding == CodingChoices_none){
 				cur_task = new EncodeFeaturesTask(encoder,"BRISK",features_sub,0);
 				taskManager_ptr->addTask(cur_task);
 				//cout << "NM: Waiting the end of the encode_features_task" << endl;
@@ -1098,7 +995,7 @@ void NodeManager::notifyOffloadingCompleted(vector<KeyPoint>& kpts,Mat& features
 				block_ft_bitstream = ((EncodeFeaturesTask*)cur_task)->getFeatsBitstream();
 				delete((EncodeFeaturesTask*)cur_task);
 			}
-			if(datc_param.coding == CodingChoices_entropyCoding){ //ALEXIS 16/12 ERROR atc_param?? datc_param
+			if(datc_param.coding == CodingChoices_entropyCoding){
 				cur_task = new EncodeFeaturesTask(encoder,"BRISK",features_sub,1);
 				taskManager_ptr->addTask(cur_task);
 				//cout << "NM: Waiting the end of the encode_features_task" << endl;
@@ -1125,9 +1022,7 @@ void NodeManager::notifyOffloadingCompleted(vector<KeyPoint>& kpts,Mat& features
 
 			//TODO: understand what to do with encoding times...
 			DataATCMsg *msg = new DataATCMsg(frame_id, i, num_blocks, camDetTime, camDescTime, 0, 0, 0, features_sub.rows, sub_kpts.size(), block_ft_bitstream, block_kp_bitstream);
-			
-			msg->setSource(node_id);//ALEXIS
-			
+			msg->setSource(node_id);
 			msg->setDestination(0);
 
 			//sendMessage(msg); //ALEXIS SIMULATE 01/02
@@ -1138,71 +1033,35 @@ void NodeManager::notifyOffloadingCompleted(vector<KeyPoint>& kpts,Mat& features
 	}
 	cur_state = IDLE;
 }
-//ALEXIS 11/01 ADD CAMERA MESSAGE
+
+
 void NodeManager::AddCameraMessage(int cameraid){
-	//offloading_manager->addCooperator(cn);
-	//std::string ip_addr = cn->socket().remote_endpoint().address().to_string();
-	//int port = cn->socket().remote_endpoint().port();
+
 	AddCameraMsg *msg = new AddCameraMsg(cameraid);
 	
-	//ALEXIS 11/12
 	msg->setSource(node_id);
 	msg->setDestination(0);
-	//
 	sendMessage(msg);
 }
-//
+
 
 void NodeManager::Processing_slice(int processingID, int subslices_iteration, Mat slice, double detection_threshold, int max_features){
 	cout << "NM: I'm entering the ProcessingSlice thread " << processingID + 1 << endl;
 
-	
-	//boost::mutex monitor;
-	//boost::mutex::scoped_lock lk(monitor);
 	Task *cur_task;
-
-
-	/*//Merge subslices
-	cur_task = new MergeSubSlicesTask(subslices_iteration,subsliceList);
-	taskManager_ptr->addTask(cur_task);
-	cout << "NM: Waiting the end of the merge_subslices_task" << endl;
-	while(!cur_task->completed){
-		cur_task_finished.wait(lk);
-	}
-	cout << "NM: ended merge_subslices_task" << endl;
-	Mat slice = ((MergeSubSlicesTask*)cur_task)->getMySlice();
-	delete((MergeSubSlicesTask*)cur_task);
-	*/
-	/*
-	if(processingID==1){
-		namedWindow( "Display window 1", WINDOW_AUTOSIZE );	// Create a window for display.
-		imshow( "Display window 1", slice );                   // Show our image inside it.
-		waitKey(0);                                          // Wait for a keystroke in the window
-	}else{
-		namedWindow( "Display window 2", WINDOW_AUTOSIZE );	// Create a window for display.
-		imshow( "Display window 2", slice );                   // Show our image inside it.
-		waitKey(0);                                          // Wait for a keystroke in the window
-	}
-	*/
 
 	// Extract the keypoints
 	cur_task = new ExtractKeypointsTask(extractor,slice,detection_threshold);
 	taskManager_ptr->addTask(cur_task);
 	cerr << "NM: Waiting the end of the extract_keypoints_task " << processingID + 1<< endl;
-	
-	//cerr << "1 ////////////////////////////////////////////////////////////////////////////////////////" << endl;
 	cerr << "1 Status " << cur_task << " " << cur_task->completed << endl;
 	{
 		boost::mutex::scoped_lock lk(cur_task->task_monitor);
 		cerr << "1 Status " << cur_task << " " << cur_task->completed << endl;
 		while(!cur_task->completed){
-			//cerr << "2 ////////////////////////////////////////////////////////////////////////////////////////" << endl;
-			cerr << "2 Status " << cur_task << " " << cur_task->completed << " ********************************" << endl;
 			cur_task_finished.wait(lk);
-			//cerr << "7 ////////////////////////////////////////////////////////////////////////////////////////" << endl;
 		}
 	}
-	cerr << "8 Status " << cur_task << " " << cur_task->completed << " ********************************" << endl;
 	cerr << "NM: ended extract_keypoints_task " << processingID + 1 << endl;
 	vector<KeyPoint> kpts = ((ExtractKeypointsTask*)cur_task)->getKeypoints();
 	double detTime = ((ExtractKeypointsTask*)cur_task)->getDetTime();
@@ -1214,16 +1073,12 @@ void NodeManager::Processing_slice(int processingID, int subslices_iteration, Ma
 	std::cout<<std::dec;
 	cur_task = new ExtractFeaturesTask(extractor,slice,kpts,max_features);
 	taskManager_ptr->addTask(cur_task);
-	cerr << "NM: Waiting the end of the extract_features_task " << processingID + 1 << endl;
-	cerr << "1 2 Status " << cur_task << " " << cur_task->completed << endl;
 	{
 		boost::mutex::scoped_lock lk(cur_task->task_monitor);
 		while(!cur_task->completed){
-cerr << "2 2 Status " << cur_task << " " << cur_task->completed << " ********************************" << endl;
 			cur_task_finished.wait(lk);
 		}	
 	}
-	cerr << "8 2 Status " << cur_task << " " << cur_task->completed << " ********************************" << endl;
 	cerr << "NM: ended extract_features_task " << processingID + 1 << endl;
 	Mat features = ((ExtractFeaturesTask*)cur_task)->getFeatures();
 	kpts = ((ExtractFeaturesTask*)cur_task)->getKeypoints();
@@ -1239,9 +1094,7 @@ cerr << "2 2 Status " << cur_task << " " << cur_task->completed << " ***********
 
 
 void NodeManager::TransmissionFinished(int i, Connection* c){
-//send ACK_SLICE_MESSAGE
-	//boost::mutex monitor;
-	//boost::mutex::scoped_lock lk(monitor);
+
 	Task *cur_task;
 	cout << "Sending ACK_SLICE_MESSAGE to Camera " << i << endl;
 
@@ -1266,10 +1119,7 @@ void NodeManager::TransmissionFinished(int i, Connection* c){
 
 void NodeManager::notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& features, double detTime, double descTime, double mergeTime, double processingTime, Connection* c){
 
-	//boost::mutex monitor;
-	//boost::mutex::scoped_lock lk(monitor);
 	Task *cur_task;
-	//decode the image (should become a task)
 	cv::Mat slice;
 
 	//features serialization
@@ -1304,8 +1154,7 @@ void NodeManager::notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& f
 	delete((EncodeKeypointsTask*)cur_task);
 	cout << "sending " << (int)(kpts.size()) << "keypoints" << endl;
 	cout << "and " << (int)(features.rows) << "features" << endl;
-	
-	
+
 	DataATCMsg *atc_msg = new DataATCMsg(frame_id, 0, 1, detTime, descTime, mergeTime, processingTime, 0, features.rows, kpts.size(), ft_bitstream, kp_bitstream);
 
 	atc_msg->setTcpConnection(c);
@@ -1324,6 +1173,7 @@ void NodeManager::notifyCooperatorCompleted(int i, vector<KeyPoint>& kpts,Mat& f
 	delete((SendWiFiMessageTask*)cur_task);
 }
 	
+/*
 void NodeManager::SIMULATION(int option){	
 	
 	switch(option){
@@ -1356,4 +1206,5 @@ void NodeManager::SIMULATION(int option){
 			cout << "sending another DATCmsg" << endl;
 		}
 	}
-}	
+}
+*/

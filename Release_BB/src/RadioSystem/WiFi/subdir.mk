@@ -4,19 +4,16 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/RadioSystem/WiFi/ALWiFiRadioSystem.cpp \
 ../src/RadioSystem/WiFi/Connection.cpp \
 ../src/RadioSystem/WiFi/ConnectionManager.cpp \
 ../src/RadioSystem/WiFi/WiFiRadioSystem.cpp 
 
 OBJS += \
-./src/RadioSystem/WiFi/ALWiFiRadioSystem.o \
 ./src/RadioSystem/WiFi/Connection.o \
 ./src/RadioSystem/WiFi/ConnectionManager.o \
 ./src/RadioSystem/WiFi/WiFiRadioSystem.o 
 
 CPP_DEPS += \
-./src/RadioSystem/WiFi/ALWiFiRadioSystem.d \
 ./src/RadioSystem/WiFi/Connection.d \
 ./src/RadioSystem/WiFi/ConnectionManager.d \
 ./src/RadioSystem/WiFi/WiFiRadioSystem.d 

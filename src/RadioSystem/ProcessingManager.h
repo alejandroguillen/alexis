@@ -81,8 +81,6 @@ public:
 	void storeKeypointsAndFeatures(int subslices_iteration,vector<KeyPoint>& kpts,Mat& features, double detTime, double descTime);
 
 private:
-	
-	void notifyToProcess(int i);
 	Mat mergeSubSlices(int subslices_iteration, vector<subslice> subsliceList);
 	vector<subslice> getData(int subslices_iteration);
 	void setData();
@@ -91,7 +89,6 @@ private:
 
 	int frame_id;
 	double next_detection_threshold;
-	//vector<camera> cameraList;
 	
 	vector<subslice> subsliceList;
 	vector<slices> sliceList;
@@ -110,35 +107,19 @@ private:
 	double processingTime;
 	
 	boost::thread p_thread;
+
 	
-	bool waitcamera;
-	//bool firstsubslice;
-	boost::mutex m_mutex;
-	//boost::condition m_condition;
-	
-	//vector<bool> processcond;
 	bool processcond;
-	vector<bool> slicecond;
-	//boost::ptr_vector<boost::mutex> thread_mutex;
+
 	boost::mutex thread_mutex;
-	boost::mutex subslice_mutex;
-	//boost::ptr_vector<boost::condition> thread_condition;
 	boost::condition thread_condition;
-	boost::condition subslice_condition;
 	
 	boost::mutex mutex;
 	int dataavailable;
-	
-	bool processempty;
-	
 	bool last_subslice_received;
 	
 	boost::mutex second_mutex;
 	boost::condition second_condition;
-	bool secondprocesscond;
-	bool secondprocess;
-
-	boost::mutex ACK_mutex;
 
 	double mergeTime;
 		

@@ -25,15 +25,9 @@ class WiFiRadioSystem{
 
 public:
 	WiFiRadioSystem(boost::asio::ip::tcp::resolver::query, std::string mode, NodeManager* nm);
+	WiFiRadioSystem(boost::asio::ip::tcp::resolver::query, boost::asio::ip::tcp::resolver::query, std::string mode, NodeManager* nm);
 	void startReceiver();
-	/*//ALEXIS 14/12 WIFI THREAD
-	void startReceiver2(){
-			r_thread = boost::thread(&WiFiRadioSystem::handleConnect, this);
-		}
-	void joinReceiver2(){
-			r_thread.join();
-		}
-	//*/
+
 	std::set<Connection*> getWiFiConnections();
 
 private:
@@ -45,6 +39,7 @@ private:
 	tcp::acceptor acceptor;
 	ConnectionManager connection_manager;
 	Connection* new_connection;
+	Connection* new_connection2;
 
 	NodeManager* node_manager;
 

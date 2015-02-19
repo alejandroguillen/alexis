@@ -44,6 +44,37 @@ node_manager(nm)
 	}
 }
 
+WiFiRadioSystem::WiFiRadioSystem(tcp::resolver::query query, tcp::resolver::query query2, std::string mode, NodeManager* nm) :
+io_service(),
+acceptor(io_service),
+connection_manager(nm),
+new_connection(new Connection(io_service,
+		connection_manager)),
+new_connection2(new Connection(io_service,
+		connection_manager)),
+node_manager(nm)
+{
+	new_connection->setNodeManager(node_manager);
+	new_connection2->setNodeManager(node_manager);
+	tcp::resolver resolver(io_service);
+	tcp::endpoint endpoint = *resolver.resolve(query);
+	tcp::endpoint endpoint2 = *resolver.resolve(query2);
+	tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+	tcp::resolver::iterator endpoint_iterator2 = resolver.resolve(query2);
+
+
+	std::cout << "connecting to Camera 1..." << std::endl;
+	boost::asio::async_connect(new_connection->socket(), endpoint_iterator,
+			boost::bind(&WiFiRadioSystem::handleConnect, this,
+					boost::asio::placeholders::error, endpoint_iterator, new_connection));
+	std::cout << "connecting to Camera 2..." << std::endl;
+	boost::asio::async_connect(new_connection2->socket(), endpoint_iterator2,
+			boost::bind(&WiFiRadioSystem::handleConnect, this,
+					boost::asio::placeholders::error, endpoint_iterator2, new_connection2));
+
+
+}
+
 void WiFiRadioSystem::startReceiver(){
 	io_service.run();
 }

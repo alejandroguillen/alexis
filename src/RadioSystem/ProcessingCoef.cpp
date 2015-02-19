@@ -20,6 +20,7 @@ ProcessingCoef::ProcessingCoef(float pt_exp_coef) {
 	Pt_exp_coef_ = pt_exp_coef;
 	pt_samples=0;
 	alpha_d_=0;
+	overlapNpixels=0;
 }
 
 double ProcessingCoef::getProcessingTimeCoef() {

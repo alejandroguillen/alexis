@@ -74,7 +74,6 @@ src/NodeManager/NodeManager.d: ../src/NodeManager/NodeManager.cpp \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ConnectionManager.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/Connection.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/Header.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ALWiFiRadioSystem.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/S2GInterface/S2GInterface.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/ACKsliceMsg.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/AddCameraMsg.h \
@@ -92,10 +91,7 @@ src/NodeManager/NodeManager.d: ../src/NodeManager/NodeManager.cpp \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/lp_solve/lp_SOS.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingCoef.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TransmissionCoef.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingManager.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/NodeManager/SIMULATIONManager.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingSpeedEstimator.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h
+ /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingManager.h
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/NodeManager/NodeManager.h:
 
@@ -247,8 +243,6 @@ src/NodeManager/NodeManager.d: ../src/NodeManager/NodeManager.cpp \
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/Header.h:
 
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ALWiFiRadioSystem.h:
-
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/S2GInterface/S2GInterface.h:
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/ACKsliceMsg.h:
@@ -284,9 +278,3 @@ src/NodeManager/NodeManager.d: ../src/NodeManager/NodeManager.cpp \
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TransmissionCoef.h:
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingManager.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/NodeManager/SIMULATIONManager.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/ProcessingSpeedEstimator.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/TxSpeedEstimator.h:

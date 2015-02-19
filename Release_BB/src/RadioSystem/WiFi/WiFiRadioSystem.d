@@ -92,9 +92,6 @@ src/RadioSystem/WiFi/WiFiRadioSystem.d: \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/StopMsg.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/CoopInfoMsg.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/WiFiRadioSystem.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ALWiFiRadioSystem.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ConnectionManager.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/Connection.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/S2GInterface/S2GInterface.h
 
 ../src/RadioSystem/WiFi/WiFiRadioSystem.h:
@@ -280,11 +277,5 @@ src/RadioSystem/WiFi/WiFiRadioSystem.d: \
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/CoopInfoMsg.h:
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/WiFiRadioSystem.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ALWiFiRadioSystem.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ConnectionManager.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/Connection.h:
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/S2GInterface/S2GInterface.h:

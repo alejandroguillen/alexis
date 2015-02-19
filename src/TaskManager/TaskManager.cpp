@@ -49,19 +49,5 @@ void TaskManager::taskManagerThread(){
 		nodeManager_ptr->notify_endTask();
 
 	}
-	/*while(1){
-
-		Task *cur_task;
-		task_queue.wait_and_pop(cur_task);
-
-		cur_task->execute();
-
-
-
-		// notify the conclusion of the task
-		sent_notifications++;
-		nodeManager_ptr->notify_endTask();
-
-	}*/
 
 }

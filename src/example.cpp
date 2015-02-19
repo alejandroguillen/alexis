@@ -5,7 +5,6 @@
 #include "RadioSystem/RadioSystem.h"
 #include "RadioSystem/MessageParser.h"
 #include "S2GInterface/S2GInterface.h"
-#include "NodeManager/SIMULATIONManager.h"
 
 using namespace std;
 /*
@@ -34,7 +33,6 @@ int main(int argc, char ** argv){
 	TaskManager *taskMng;
 	S2GInterface *s2ginterface;
 	MessageParser *msg_parser;
-	SIMULATIONManager *simulation_manager;
 	//ConnectionManager *connMng;
 	boost::asio::io_service io_service;
 
@@ -77,7 +75,6 @@ int main(int argc, char ** argv){
 		taskMng  = new TaskManager(nodeMng);
 		//connMng = new ConnectionManager();
 
-
 		nodeMng->set_radioSystem(radioSys);
 		nodeMng->set_taskManager(taskMng);
 
@@ -85,11 +82,7 @@ int main(int argc, char ** argv){
 		taskMng->start();
 
 		//start a telosb receiver
-		radioSys->startTelosbReceiver(argv[2], argv[6]); //ALEXIS
-
-		//ALEXIS SIMULATE 03/02
-		//simulation_manager = new SIMULATIONManager(radioSys, nodeMng);
-		
+		radioSys->startTelosbReceiver(argv[2], argv[6]);
 
 		//start the WiFi manager
 		radioSys->startWiFiReceiver();
@@ -103,7 +96,6 @@ int main(int argc, char ** argv){
 		msg_parser = new MessageParser();
 		radioSys = new RadioSystem(nodeMng,msg_parser,argv[3],argv[4],argv[5]);
 		taskMng  = new TaskManager(nodeMng);
-		//connMng = new ConnectionManager();
 
 		nodeMng->set_radioSystem(radioSys);
 		nodeMng->set_taskManager(taskMng);
@@ -112,10 +104,8 @@ int main(int argc, char ** argv){
 		//start the task manager
 		taskMng->start();
 		
-		//radioSys->startWiFiReceiver(); ORIGINAL
-		radioSys->startWiFiReceiver2(); //ALEXIS 15/12 WIFI CLASS
+		radioSys->startWiFiReceiver(); //ALEXIS 15/12 WIFI CLASS
 		
-		//radioSys->joinWifiReceiver2(); //ALEXIS 14/12 WIFI THREAD
 		break;
 	}
 	default:

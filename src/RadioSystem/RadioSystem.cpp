@@ -1,12 +1,10 @@
 #include <stdlib.h>
 #include <iostream>
 #include <boost/asio.hpp>
-#include <vector> //ALEXIS 15/12 WIFI
+#include <vector>
 #include "RadioSystem/RadioSystem.h"
 #include "NodeManager/NodeManager.h"
-#include "NodeManager/SIMULATIONManager.h"
 #include "RadioSystem/WiFi/WiFiRadioSystem.h"
-#include "RadioSystem/WiFi/ALWiFiRadioSystem.h" //ALEXIS 15/12 WIFI CLASS
 
 using namespace std;
 
@@ -33,25 +31,13 @@ RadioSystem::RadioSystem(NodeManager* nm, MessageParser* m, string ip_address, s
 		
 		tcp::resolver::query query(ip_address, port);
 		wifiRadioSystem_ptr = new WiFiRadioSystem(query,std::string("server"),nodeManager_ptr);
-		//simulation_manager = new SIMULATIONManager(this);
 		break;
 	}
 	case COOPERATOR:
 	{	
 		tcp::resolver::query query(ip_address, port);
-		//wifiRadioSystem_ptr = new WiFiRadioSystem(query,std::string("client"),nodeManager_ptr); ORIGINAL
-		//if(ip_address != ip_address2)	//ALEXIS 15/12 WIFI
-			//tcp::resolver::query query2(ip_address2, port); //ALEXIS 14/12 WIFI
-		//if(ip_address != ip_address2){ //ALEXIS 15/12 WIFI
-			//tcp::resolver::query query2(ip_address2, port); //ALEXIS 15/12 WIFI
-			//wifiRadioSystem_ptr2 = new WiFiRadioSystem(query2,std::string("client"),nodeManager_ptr); //ALEXIS 14/12 WIFI THREAD
-		//}
-		
-		//ALEXIS 15/12 WIFI CONNECTION
 		tcp::resolver::query query2(ip_address2, port);
-		wifiRadioSystem_ptr2 = new ALWiFiRadioSystem(query,query2,std::string("client"),nodeManager_ptr);
-		//
-		
+		wifiRadioSystem_ptr = new WiFiRadioSystem(query,query2,std::string("client"),nodeManager_ptr);
 		break;
 	}
 	default:
@@ -61,9 +47,6 @@ RadioSystem::RadioSystem(NodeManager* nm, MessageParser* m, string ip_address, s
 
 void RadioSystem::startWiFiReceiver(){
 	wifiRadioSystem_ptr->startReceiver();
-}
-void RadioSystem::startWiFiReceiver2(){
-	wifiRadioSystem_ptr2->startReceiver();
 }
 
 
@@ -92,7 +75,6 @@ void RadioSystem::joinTelosbReceiver(){
 	telosbRadioSystem_ptr->joinReceiver();
 }
 
-//ALEXIS SIMULATION 03/02S
 
 void RadioSystem::startTelosbMsg(){
 	telosbRadioSystem_ptr->startMsg();
@@ -108,7 +90,7 @@ void RadioSystem::notifyMsg(Message* msg){
 }
 
 std::set<Connection*> RadioSystem::getWiFiConnections(){
-	return wifiRadioSystem_ptr2->getWiFiConnections(); //ALEXIS 16/12 WIFI CLASS
+	return wifiRadioSystem_ptr->getWiFiConnections();
 }
 
 //void RadioSystem::radioSystemThread(){

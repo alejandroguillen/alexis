@@ -12,11 +12,9 @@
 #include "Tasks/Tasks.h"
 #include "Messages/Message.h"
 #include "S2GInterface/S2GInterface.h"
-//#include "RadioSystem/ProcessingManager.h"
 
 class OffloadingManager;
 class ProcessingManager;
-class SIMULATIONManager;
 
 //todo: param structures
 typedef struct CTA_param{
@@ -89,8 +87,7 @@ public:
 	void notifyCooperatorOnline(Connection* conn);
 	void notifyCooperatorOffline(Connection* conn);
 	void notifyOffloadingCompleted(vector<KeyPoint>& kpts,Mat& features, double detTime, double descTime);
-	//void sendTestPacket(Message* msg);
-	int node_id; //ALEXIS
+	int node_id;
 	void AddCameraMessage(int cameraid); //ALEXIS 11/01 ADD CAMERA MESSAGE
 	void DATC_processing_thread_cooperator(int i, vector<uchar> data, Connection* c, double detection_threshold, int max_features);
 	
@@ -128,20 +125,12 @@ public:
 	VisualFeatureDecoding *decoder;
 	OffloadingManager *offloading_manager;
 	std::vector<ProcessingManager*> processing_manager;
-	SIMULATIONManager *simulation_manager;
 	
 	boost::thread p_thread;
 	
-	
-	//bool waitcamera2;
-	//boost::mutex m_mutex2;
-	//boost::condition m_condition2;
-	
-	
 	//ALEXIS SIMULATE 01/02
 	int simulate;
-	void SIMULATION(int option);
-	
+	//void SIMULATION(int option);
 	
 	vector<bool> firstprocess;
 	vector<int> countsubslices;

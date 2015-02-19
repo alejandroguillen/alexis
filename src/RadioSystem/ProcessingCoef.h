@@ -28,4 +28,4 @@ private:
 	double overlapNpixels;
 };
 
-#endif /* PROCESSINGCOEF_H_ */
+#endif

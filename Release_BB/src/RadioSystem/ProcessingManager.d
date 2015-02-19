@@ -104,7 +104,6 @@ src/RadioSystem/ProcessingManager.d: \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ConnectionManager.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/Connection.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/Header.h \
- /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ALWiFiRadioSystem.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/S2GInterface/S2GInterface.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/ACKsliceMsg.h \
  /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/AddCameraMsg.h \
@@ -331,8 +330,6 @@ src/RadioSystem/ProcessingManager.d: \
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/Connection.h:
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/Messages/Header.h:
-
-/home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/RadioSystem/WiFi/ALWiFiRadioSystem.h:
 
 /home/alexis/Dropbox/THESIS/Testbed_code/workspace/alexis/src/S2GInterface/S2GInterface.h:
 

@@ -53,7 +53,7 @@ typedef struct cooperator{
 	double kencTime;
 	double fencTime;
 	
-	int id; //ALEXIS 09/01 COOP ID
+	int id;
 	ProcessingCoef* processing_time_coef;
 	double Ptcoef;
 	double processingTime;
@@ -117,7 +117,6 @@ private:
 	int cooperators_to_use;
 	int received_cooperators;
 	vector<cooperator> cooperatorList;
-	//cooperator cooperatorSlice;
 
 	NodeManager* node_manager;
 	//used to store keypoints and features from cooperators
@@ -141,7 +140,7 @@ private:
 
 	boost::mutex mut;
 	
-	std::set<int> id; //ALEXIS 09/01 COOP ID
+	std::set<int> id;
 	
 	int width_;
 	int height_;
